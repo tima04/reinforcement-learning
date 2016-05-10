@@ -46,9 +46,7 @@ flycheck_*.el
 
 ### Java ###
 *.class
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
+*Foo*
 
 # Package Files #
 *.jar
@@ -64,9 +62,11 @@ hs_err_pid*
 .gradle
 .settings
 /bin/
+*xmi
 
 ### idea ###
 .idea/
 gradle*
 build
 **/.DS_Store
+
