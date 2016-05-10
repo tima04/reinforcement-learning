@@ -20,9 +20,10 @@ public class TetrisFeatures {
 	public final int erodedCells;
 	public final int colDiff;
 	public final int pileHeight; //max col height;
+	public final boolean gameOver;
 
 	TetrisFeatures(int height, int width, int[] colHeights,
-				   Set<Pair<Integer, Integer>> holesCords) {
+				   Set<Pair<Integer, Integer>> holesCords, boolean gameOver) {
 		this.height = height;
 		this.width = width;
 		this.colHeights = colHeights;
@@ -38,7 +39,8 @@ public class TetrisFeatures {
 		this.cumWells = 0;
 		this.erodedCells = 0;
 		this.colDiff = 0;
-		this.pileHeight = Arrays.stream(colHeights).max().getAsInt(); 
+		this.pileHeight = Arrays.stream(colHeights).max().getAsInt();
+		this.gameOver = gameOver;
 	}	
 
 	// not using it.

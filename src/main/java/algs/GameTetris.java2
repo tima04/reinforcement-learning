@@ -1,6 +1,6 @@
 package ampi;
 
-import algorta.domains.tetris2.Tetris;
+import algorta.domains.tetris.Tetris;
 import algorta.domains.tetris2.TetrisFeatures;
 import algorta.domains.tetris2.TetrisState;
 import algorta.factory.Agents;

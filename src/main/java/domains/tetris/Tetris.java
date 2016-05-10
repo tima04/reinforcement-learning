@@ -1,6 +1,7 @@
 package domains.tetris;
 
 
+import java.util.HashSet;
 import java.util.Random;
 
 public class Tetris{
@@ -8,7 +9,7 @@ public class Tetris{
     boolean[][] board;
     public static int height = 16, width = 10, matHeight = height + 4;
     Tetromino piece;
-//    TetrisFeatures features;
+    TetrisFeatures features;
     String stringKey;
     Random rand;
 
@@ -25,7 +26,7 @@ public class Tetris{
             colHeights[i] = 0;
 
         this.rand = rand;
-//        features = new TetrisFeatures(colHeights, new ArrayList<>(), false);
+        features = new TetrisFeatures(height, width, colHeights, new HashSet<>(100), false);
         piece = Tetromino.pieces.get(rand.nextInt(Tetromino.pieces.size()));
     }
 
