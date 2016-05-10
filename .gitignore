@@ -62,11 +62,11 @@ hs_err_pid*
 .gradle
 .settings
 /bin/
-<<<<<<< HEAD
 *xmi
-=======
 
 ### idea ###
 .idea/
 gradle*
->>>>>>> 6950c63f798ed5c2e551563877ff29294409c03c
+build
+**/.DS_Store
+
