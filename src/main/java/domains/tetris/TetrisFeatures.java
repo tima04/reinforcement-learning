@@ -32,14 +32,20 @@ public class TetrisFeatures {
 	public final int nPatternDiversity;
 	public final int nClearedLines;
 	public final int nBrickCleared;
-	// TetrisFeatures(int height, int width, int[] colHeights,
-	// 			   Set<Pair<Integer, Integer>> holesCords, boolean gameOver,
-	// 			   int nClearedLines, int nBrickCleared) {
+	
 	TetrisFeatures(Builder builder) {
 		this.height = builder.height;
 		this.width = builder.width;
-		this.colHeights = builder.colHeights;
-		this.holesCords = builder.holesCords;
+		
+		if (builder.board != null) {
+			this.colHeights = getColHeights(builder.board);
+			this.holesCords = getHolesCords(builder.board);
+			}
+		else {
+			this.colHeights = builder.colHeights;
+			this.holesCords = builder.holesCords;
+		}
+		
 		this.gameOver = builder.gameOver;
 		this.nClearedLines = builder.nClearedLines;
 		this.nBrickCleared = builder.nBrickCleared;
@@ -65,17 +71,24 @@ public class TetrisFeatures {
 	public static class Builder {
 
 		//required parameters, raise error if not set
-		private Integer height = null;
-		private Integer width = null;
-		private Set<Pair<Integer, Integer>> holesCords = null;
-		private int[] colHeights = null;
-		private Boolean gameOver = null;
-		private Integer nClearedLines = null;
-		private Integer nBrickCleared = null;
+		private int height; 
+		private int width;
+		private boolean gameOver; 
+		private int nClearedLines; 
+		private int nBrickCleared; 
 
-		public Builder(int height, int width) {
+		//optional either a and b or c must be given.
+		private int[] colHeights = null; //a 
+		private Set<Pair<Integer, Integer>> holesCords = null; //b
+		private boolean[][] board = null;
+
+		public Builder(int height, int width, int nClearedLines, int nBrickCleared,
+					   boolean gameOver) {
 			this.height = height;
 			this.width = width;
+			this.nClearedLines = nClearedLines;
+			this.nBrickCleared = nBrickCleared;
+			this.gameOver = gameOver;
 		}
 
 		public Builder holesCords(Set<Pair<Integer, Integer>> val) {
@@ -83,23 +96,13 @@ public class TetrisFeatures {
 			return this;
 		}
 
-
-		public Builder height(int val) { this.height = val; return this;}
-
-		public Builder width(int val) { this.width= val; return this;}
-
 		public Builder colHeights(int[] val) { this.colHeights = val; return this;}
 
-		public Builder nClearedLines(int val) { this.nClearedLines = val; return this;}
-
-		public Builder nBrickCleared(int val) { this.nBrickCleared = val; return this;}
-
-		public Builder gameOver (boolean val) { this.gameOver = val; return this;}
+		public Builder board(boolean[][] val) { this.board = val; return this;}
 
 		public TetrisFeatures build() {
-			if (holesCords == null || nClearedLines == null ||
-				nBrickCleared == null || gameOver == null)
-				throw new RuntimeException("please supply all arguments!");
+			if ((holesCords == null && colHeights == null) || board == null)
+				throw new RuntimeException("please either set board or (holesCords and colHeights)!");
 			return new TetrisFeatures(this);
 		}
 	}
@@ -213,5 +216,26 @@ public class TetrisFeatures {
 		return rslt;
 	}
 
+	int[] getColHeights(boolean[][] board) {
+		int[] colHeights = new int[width];
+		//initialize to -1
+		for (int i = 0; i < width ; i++) {
+			colHeights[i] = -1;
+		}
+		for (int r = height-1; r >=0; r++)
+			for (int c = 0; c < width; c++)
+				if (board[r][c] && colHeights[c] == -1)
+					colHeights[c] = r;
+		return colHeights;
+	}
+
+	Set<Pair<Integer, Integer>> getHolesCords(boolean[][] board) {
+		Set<Pair<Integer, Integer>> rslt = new HashSet<>();
+		for (int col = 0; col < width; col++)	
+			for (int row = 0; row < colHeights[col]; row++)
+				if (!board[row][col])
+					rslt.add(new Pair<Integer, Integer> (row, col));
+		return rslt;
+	}
 }
 
