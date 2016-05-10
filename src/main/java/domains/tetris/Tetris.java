@@ -28,7 +28,7 @@ public class Tetris{
             colHeights[i] = 0;
 
         this.rand = rand;
-        features = new TetrisFeatures(height, width, colHeights, new HashSet<>(100), false);
+        features = new TetrisFeatures.Builder(height, width, 0, 0, 0, false).board(board).build();
         piece = Tetromino.pieces.get(rand.nextInt(Tetromino.pieces.size()));
     }
 
@@ -67,7 +67,7 @@ public class Tetris{
         for (int rot = 0; rot < piece.getNumRotations(); rot++) {
             for (int col = 0; col <= width - piece.getRotatedPiece(rot)[0].length; col++) {
                 int offset = getVerticalOffset(col, rot);
-                TetrisFeatures newFeatures = getTetrisFeatures(col, offset, piece.getRotatedPieceHeights(rot), piece.getRotatedPieceHoles(rot));
+                TetrisFeatures newFeatures = getTetrisFeatures(col, offset, piece.getRotatedPieceHeights(rot), piece.getRotatedPieceHoles(rot), piece.getRotatedPiece(rot));
                 rslt.add(new Pair(new TetrisAction(col, rot), newFeatures));
             }
         }
@@ -86,17 +86,23 @@ public class Tetris{
         boolean[][] pieceMatrix = piece.getRotatedPiece(rot);
         int[] pieceHeights = piece.getRotatedPieceHeights(rot);
         int[] pieceHoles = piece.getRotatedPieceHoles(rot);
+        System.out.println("action: " + col+"_"+rot);
+        System.out.println("offset: "+offset);
+        int ncol = pieceMatrix[0].length;
+        for (int c = 0; c < ncol; c++)
+            System.out.println(features.colHeights[c]);
 
+        System.out.println(features.colHeights[col]);
         //make piece part of board:
         int nrow = pieceMatrix.length;
-        int ncol = pieceMatrix[0].length;
+        ncol = pieceMatrix[0].length;
         for (int i = 0; i < nrow; i++)
             for (int j = 0; j < ncol; j++)
                 board[features.colHeights[col] + i + offset][col + j] = pieceMatrix[i][j] || board[features.colHeights[col] + i + offset][col + j];
 
 
 
-        features = getTetrisFeatures(col, offset, pieceHeights, pieceHoles);
+        features = getTetrisFeatures(col, offset, pieceHeights, pieceHoles, pieceMatrix);
 
         if(random == null)
             random = new Random();
@@ -169,19 +175,19 @@ public class Tetris{
 
 
     private static TetrisFeatures getTetrisFeatures(boolean[][] board) {
-       //// TODO: 10/05/16 getTetrisFeatures for a boolean board.
-        return new TetrisFeatures(height, width, new int[]{}, new HashSet<>(100), false);
+        return new TetrisFeatures.Builder(height, width, 0, 0, 0, true).board(board).build();
     }
 
-    private TetrisFeatures getTetrisFeatures(int col, int offset, int[] pieceHeights, int[] pieceHoles){
+    private TetrisFeatures getTetrisFeatures(int col, int offset, int[] pieceHeights, int[] pieceHoles, boolean[][] rotatedPiece){
         int[] newColHeights = getNewColHeights(col, offset, pieceHeights);
         Set<Pair<Integer, Integer>> newHoleCoordinates = getHolesCoordinates(col, pieceHoles, newColHeights, pieceHeights, features.holesCords);
+        double landingHeight = landingHeight(col, rotatedPiece, newColHeights);
         boolean gameOver = false;
 
         if(Compute.max(newColHeights) > height)
             gameOver = true;
 
-        return new TetrisFeatures(height, width, newColHeights, newHoleCoordinates, gameOver);
+        return new TetrisFeatures.Builder(height, width, 0, 0, landingHeight, gameOver).colHeights(newColHeights).holesCords(newHoleCoordinates).build();
     }
 
     /**
@@ -224,4 +230,45 @@ public class Tetris{
         return newHolesIndex;
     }
 
+    private double landingHeight(int col, boolean[][] rotatedPiece, int[] newHeights){
+        int maxNewHeight = maxNewHeight(col, rotatedPiece, newHeights);
+        int pieceHeight = rotatedPiece.length;
+        return ((double)maxNewHeight - (double)pieceHeight/2);
+    }
+
+
+    /**
+     * Returns the maximum height where the piece was placed
+     * @param col
+     * @param rotatedPiece
+     * @param newHeights
+     * @return
+     */
+    private int maxNewHeight(int col, boolean[][] rotatedPiece, int[] newHeights){
+        int maxNewHeight = 0;
+        int pieceWidth = rotatedPiece[0].length;
+        for (int i = 0; i < pieceWidth; i++)
+            if(newHeights[i+col] > maxNewHeight)
+                maxNewHeight = newHeights[i+col];
+
+        return maxNewHeight;
+    }
+
+
+    public String getStringKey() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(piece.name());
+        stringBuilder.append("|");
+        for (int row = 0; row < features.pileHeight; row++) {
+            for (int column = 0; column < width; column++) {
+                if(board[row][column]) {
+                    stringBuilder.append(column);
+                    stringBuilder.append(":");
+                }
+            }
+            stringBuilder.append("|");
+        }
+        stringKey = stringBuilder.toString();
+        return stringKey;
+    }
 }

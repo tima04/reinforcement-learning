@@ -19,7 +19,7 @@ public class TetrisFeatures {
 	public final int colTransition;
 	public final int rowTransition;
 	public final int nRowsWithHoles;
-	public final int landingHeight;
+	public final double landingHeight;
 	public final int cumWells;
 	public final int nColDiff;
 	public final int pileHeight; //max col height;
@@ -54,7 +54,7 @@ public class TetrisFeatures {
 			.stream()
 			.map(p -> p.getFirst())
 			.collect(Collectors.toSet()).size();
-		this.landingHeight = 0;
+		this.landingHeight = builder.landingHeight;
 		this.cumWells = 0;
 		this.nColDiff = 0;
 		this.pileHeight = Arrays.stream(colHeights).max().getAsInt();
@@ -75,20 +75,22 @@ public class TetrisFeatures {
 		private int width;
 		private boolean gameOver; 
 		private int nClearedLines; 
-		private int nBrickCleared; 
+		private int nBrickCleared;
+		private double landingHeight;
 
 		//optional either a and b or c must be given.
 		private int[] colHeights = null; //a 
 		private Set<Pair<Integer, Integer>> holesCords = null; //b
-		private boolean[][] board = null;
+		private boolean[][] board = null; //c
 
-		public Builder(int height, int width, int nClearedLines, int nBrickCleared,
+		public Builder(int height, int width, int nClearedLines, int nBrickCleared, double landingHeight,
 					   boolean gameOver) {
 			this.height = height;
 			this.width = width;
 			this.nClearedLines = nClearedLines;
 			this.nBrickCleared = nBrickCleared;
 			this.gameOver = gameOver;
+			this.landingHeight = landingHeight;
 		}
 
 		public Builder holesCords(Set<Pair<Integer, Integer>> val) {
@@ -101,7 +103,7 @@ public class TetrisFeatures {
 		public Builder board(boolean[][] val) { this.board = val; return this;}
 
 		public TetrisFeatures build() {
-			if ((holesCords == null && colHeights == null) || board == null)
+			if ((holesCords == null && colHeights == null) && board == null)
 				throw new RuntimeException("please either set board or (holesCords and colHeights)!");
 			return new TetrisFeatures(this);
 		}
@@ -167,7 +169,7 @@ public class TetrisFeatures {
 
 	int getSumHeightDiff() {
 		int rslt = 0;
-		int N = colHeights.length;
+		int N = colHeights.length-1;
 		for (int i = 0; i < N; i++)
 			rslt += Math.abs(colHeights[i] - colHeights[i+1]);
 		return rslt;
@@ -195,7 +197,7 @@ public class TetrisFeatures {
 		// 	rslt += Math.abs(colHeights[i] - colHeights[i+1]);
 
 		//take contribution by walls
-		rslt += 2*this.height - colHeights[0] - colHeights[colHeights.length];
+		rslt += 2*this.height - colHeights[0] - colHeights[colHeights.length - 1];
 
 		return rslt;
 	}
@@ -220,11 +222,11 @@ public class TetrisFeatures {
 		int[] colHeights = new int[width];
 		//initialize to -1
 		for (int i = 0; i < width ; i++) {
-			colHeights[i] = -1;
+			colHeights[i] = 0;
 		}
-		for (int r = height-1; r >=0; r++)
+		for (int r = height-1; r >=0; r--)
 			for (int c = 0; c < width; c++)
-				if (board[r][c] && colHeights[c] == -1)
+				if (board[r][c] && colHeights[c] == 0)
 					colHeights[c] = r;
 		return colHeights;
 	}

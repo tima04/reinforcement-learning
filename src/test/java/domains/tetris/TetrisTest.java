@@ -4,9 +4,6 @@ package domains.tetris;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -48,7 +45,7 @@ public class TetrisTest {
                 states.add(new Pair(Tetris.parseState(items[0]), new TetrisAction(Integer.parseInt(action[0]), Integer.parseInt(action[1]))));
                 List<Double> featureValuesState = new ArrayList<>();
                 for (int j = 2; j < items.length; j++) {
-                    featureValuesState.add(Double.parseDouble(items[i]));
+                    featureValuesState.add(Double.parseDouble(items[j]));
                 }
                 featureValues.add(featureValuesState);
             }
@@ -69,10 +66,10 @@ public class TetrisTest {
             Tetris state = stateActionPair.getFirst();
             TetrisAction action = stateActionPair.getSecond();
             state.nextState(action);
-            List<Double> valuesState = ValueArrayMaker.make(state.features, "thierry");
+            List<Double> valuesState = FeatureSet.make(state.features, "thierry");
             List<Double> valuesStateFile = featureValues.get(i);
             for (int j = 0; j < featureNames.size(); j++) {
-                assertTrue(Math.abs(valuesState.get(j) - valuesStateFile.get(j)) < epsilon);
+                assertTrue("Error in feature " + featureNames.get(j)+": expected: "+valuesStateFile.get(j)+", found: "+valuesState.get(j) +"\n state: " + state.getStringKey(), Math.abs(valuesState.get(j) - valuesStateFile.get(j)) < epsilon);
             }
         }
     }
