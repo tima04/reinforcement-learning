@@ -1,4 +1,4 @@
-package algorta.domains.tetris2;
+package domains.tetris2;
 
 
 import java.util.ArrayList;
