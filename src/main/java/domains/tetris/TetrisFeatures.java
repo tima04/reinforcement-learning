@@ -243,9 +243,10 @@ public class TetrisFeatures {
 		int rc = c; //column of right-most sibling.
 		for(; holesCords.contains(new Pair<Integer, Integer>(r, lc-1));lc--);
 		for(; holesCords.contains(new Pair<Integer, Integer>(r, rc+1));rc++);
-		assert lc > 0 && rc < width-1;
-
-		return r >= Math.min(colHeights[lc-1], colHeights[rc + 1]);
+		
+		int lhght = lc > 0 ? colHeights[lc-1] : height; 
+		int rhght = rc < width-1 ? colHeights[rc+1] : height; 
+		return r >= Math.min(lhght, rhght);
 	}
 
 	int getColTransition() {
