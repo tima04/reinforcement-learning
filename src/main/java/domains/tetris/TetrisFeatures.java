@@ -191,16 +191,11 @@ public class TetrisFeatures {
 		// contribution will be |4-2| + |2-3| + |3-2| + |2-3| + |2-4| = 6.
 		int rslt = 0;
 
-		//for each hole if right cell is not a hole and hole height is less than
-		// min height of left and right column increment rslt by 2.
+		//for each hole if right cell is not a hole and hole is not open  
+		// then increment slt by 2.
 		for (Pair<Integer, Integer> hole : holesCords ) {
-			int r = hole.getFirst();
-			int c = hole.getSecond();
-			// minimum between left and right column height. 
-			int minHight = (c == 0 ? colHeights[1] :
-							c == width-1 ? colHeights[c-1] :
-							Math.min(colHeights[c-1], colHeights[c+1]));
-			if (r > minHight && (! holesCords.contains(new Pair(r, c+1))))
+			if ((!holesCords.contains(new Pair(hole.getFirst(), hole.getSecond()+1))) &&
+				!isOpen(hole))
 				rslt += 2;
 		}
 
@@ -213,6 +208,30 @@ public class TetrisFeatures {
 		rslt += 2*this.height - colHeights[0] - colHeights[colHeights.length - 1];
 
 		return rslt;
+	}
+
+	boolean isOpen(Pair<Integer, Integer> hole) {
+		//helper function for getRowTransition.
+		// hole is open if its left-most sibling* is higher than their left columnheight
+		// or its right most siblinb is higher then their right columnheight.
+		// *sibling: consecutive holes at the same height. A hole is a sibling of itself
+		// if a corresponding row at left(right) is filled then hole is it's own
+		// leftmost(rightmost) sibling.
+
+		int r = hole.getFirst();
+		int c = hole.getSecond();
+
+		if (c == 0 || c == width-1) //holes at boundaries can not be open.
+			return false;
+
+		//get columns of left and right most sibling. 
+		int lc = c; //column of left-most sibling.
+		int rc = c; //column of right-most sibling.
+		for(; holesCords.contains(new Pair<Integer, Integer>(r, lc-1));lc--);
+		for(; holesCords.contains(new Pair<Integer, Integer>(r, rc+1));rc++);
+		assert lc > 0 && rc < width-1;
+
+		return r >= Math.min(colHeights[lc-1], colHeights[rc + 1]);
 	}
 
 	int getColTransition() {
