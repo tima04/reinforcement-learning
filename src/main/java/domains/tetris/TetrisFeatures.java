@@ -194,12 +194,13 @@ public class TetrisFeatures {
 		//for each hole if right cell is not a hole and hole height is less than
 		// min height of left and right column increment rslt by 2.
 		for (Pair<Integer, Integer> hole : holesCords ) {
-			int x = hole.getFirst();
-			int y = hole.getSecond();
+			int r = hole.getFirst();
+			int c = hole.getSecond();
 			// minimum between left and right column height. 
-			int minHight = x == 0 ? colHeights[x+1] : x == width-1 ? colHeights[x-1] :
-				Math.min(colHeights[x-1], colHeights[x+1]);
-			if (y > minHight && (! holesCords.contains(new Pair(x, y+1))))
+			int minHight = (c == 0 ? colHeights[1] :
+							c == width-1 ? colHeights[c-1] :
+							Math.min(colHeights[c-1], colHeights[c+1]));
+			if (r > minHight && (! holesCords.contains(new Pair(r, c+1))))
 				rslt += 2;
 		}
 
