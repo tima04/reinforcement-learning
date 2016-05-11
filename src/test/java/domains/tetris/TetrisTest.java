@@ -16,7 +16,7 @@ import static junit.framework.TestCase.assertTrue;
 
 public class TetrisTest {
 
-    String path = "src/test/resources/tetris/featuresValues16x10.txt";
+    String path = "src/test/resources/tetris/featuresValuesBcts16x10.txt";
     List<Pair<Tetris,TetrisAction>> states;
     List<List<Double>> featureValues;
     List<String> featureNames;
