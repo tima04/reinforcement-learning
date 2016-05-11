@@ -54,10 +54,6 @@ public class TetrisTest {
         }
     }
 
-    @Test
-    public void testNextState(){
-
-    }
 
     @Test
     public void testRowTransitions(){
@@ -98,8 +94,8 @@ public class TetrisTest {
         for (int i = 0; i < states.size(); i++) {
             Pair<Tetris, TetrisAction> stateActionPair = states.get(i);
             Tetris state = stateActionPair.getFirst();
-            TetrisAction action = stateActionPair.getSecond();
-            state.nextState(action);
+//            TetrisAction action = stateActionPair.getSecond();
+//            state.nextState(action);
             List<Double> valuesState = FeatureSet.make(state.features, "thierry");
             List<Double> valuesStateFile = featureValues.get(i);
             System.out.println(state.getStringKey());
