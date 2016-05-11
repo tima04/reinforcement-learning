@@ -52,7 +52,6 @@ public class TetrisFeatures {
 		this.gameOver = builder.gameOver;
 		this.nClearedLines = builder.nClearedLines;
 		this.nBrickCleared = builder.nBrickCleared;
-		//this.rowsWithHoles = getRowsWithHoles();
 		this.nRowsWithHoles = holesCords
 			.stream()
 			.map(p -> p.getFirst())
@@ -172,7 +171,7 @@ public class TetrisFeatures {
 		int rslt = 1;
 			//for each hole directly below add 1 to the rslt.
 			for (int i = hc.getFirst();
-				 holesCords.contains(new Pair<Integer, Integer>(i+1, hc.getSecond()));
+				 holesCords.contains(new Pair(i+1, hc.getSecond()));
 					 i++)
 				rslt++;
 
@@ -180,8 +179,14 @@ public class TetrisFeatures {
 	}
 
 	int getHolesDepth() {
+		//for each hole count num of rows above first filled cell is, sum it over holes.
 		int rslt = 0;
-
+		for (Pair<Integer, Integer> hole : holesCords) {
+			int r = hole.getFirst();
+			int c = hole.getSecond();
+			for (int i = r+1; holesCords.contains(new Pair(i, c)); i++)
+				rslt += i - r;
+		}
 		return rslt;
 	}
 
@@ -244,8 +249,9 @@ public class TetrisFeatures {
 		for(; holesCords.contains(new Pair<Integer, Integer>(r, lc-1));lc--);
 		for(; holesCords.contains(new Pair<Integer, Integer>(r, rc+1));rc++);
 		
-		int lhght = lc > 0 ? colHeights[lc-1] : height; 
-		int rhght = rc < width-1 ? colHeights[rc+1] : height; 
+		int lhght = lc > 0 ? colHeights[lc-1] : height;//height of col left to
+		//leftmost-sibling, equals board-height if leftmost-sibling is at the border.
+		int rhght = rc < width-1 ? colHeights[rc+1] : height;
 		return r >= Math.min(lhght, rhght);
 	}
 
