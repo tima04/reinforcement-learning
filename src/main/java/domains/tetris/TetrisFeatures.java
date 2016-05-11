@@ -142,7 +142,7 @@ public class TetrisFeatures {
 			for (int r = maxmin; r >= colHeights[i] ; r--) { //We iterate from the top of the well to the bottom
 				boolean holeLeft = i == 0 ? false : holesCords.contains(new Pair<>(r, i-1));
 				boolean holeRight = i == width -1 ? false : holesCords.contains(new Pair<>(r, i+1));
-				if(holeLeft && holeRight) {//This is a well
+				if(!holeLeft && !holeRight) {//This is a well
 					rslt += cum;//we sum
 					cum++;//we accumulate
 				}else{//this is not a well but it is an empty cell
