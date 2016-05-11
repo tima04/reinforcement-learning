@@ -24,8 +24,7 @@ public class TetrisFeatures {
 	public final int nColDiff;
 	public final int pileHeight; //max col height;
 	public final boolean gameOver;
-	public final int nWells; 
-	public final int holesDepth; 
+	public final int holesDepth;
 	public final int nHoles; 
 	public final int sumHeightDiff; 
 	public final int nErodedCells; 
@@ -59,7 +58,7 @@ public class TetrisFeatures {
 			.map(p -> p.getFirst())
 			.collect(Collectors.toSet()).size();
 		this.landingHeight = builder.landingHeight;
-		this.cumWells = 0;
+		this.cumWells = getCumWells();
 		this.nColDiff = 0;
 		this.pileHeight = Arrays.stream(colHeights).max().getAsInt();
 		this.nHoles = holesCords.size();
@@ -68,7 +67,6 @@ public class TetrisFeatures {
 		this.rowTransition = getRowTransition(); 
 		this.nErodedCells = nClearedLines * nBrickCleared;
 		this.holesDepth =  getHolesDepth();
-		this.nWells = getNwells(); 
 		this.nPatternDiversity = getNpatternDiversity();
 	}
 
@@ -113,15 +111,18 @@ public class TetrisFeatures {
 		}
 	}
 
-	int getNwells() {
+	int getCumWells() {
 		//well is an empty cell s.t adjacent left and right cells are filled.
 		int rslt = 0;
 		//in the interior it is the hole with both left and right cells filled.
 		for(Pair<Integer, Integer> hc : holesCords) {
 			Pair<Integer, Integer> left = new Pair<>(hc.getFirst(), hc.getSecond()-1);
 			Pair<Integer, Integer> right = new Pair<>(hc.getFirst(), hc.getSecond()+1);
-			if (!(holesCords.contains(left) || holesCords.contains(right)))
-				rslt++;
+			int heightLeft = hc.getSecond() == 0 ? height : colHeights[hc.getSecond()-1];
+			int heightRight = hc.getSecond() == width - 1 ? height : colHeights[hc.getSecond()+1];
+			if (!(holesCords.contains(left) || holesCords.contains(right)) &&
+					(heightLeft > hc.getFirst() && heightRight > hc.getFirst()))
+				rslt = rslt + getWellDepth(hc);
 			}
 
 		//at top of each column nwells are
@@ -137,37 +138,50 @@ public class TetrisFeatures {
 			else
 				maxmin = Math.max(Math.min(colHeights[i-1], colHeights[i+1]),
 										colHeights[i]);
-			rslt += maxmin - colHeights[i];
-		} 
+			int cum = 1;
+			for (int r = maxmin; r >= colHeights[i] ; r--) { //We iterate from the top of the well to the bottom
+				boolean holeLeft = i == 0 ? false : holesCords.contains(new Pair<>(r, i-1));
+				boolean holeRight = i == width -1 ? false : holesCords.contains(new Pair<>(r, i+1));
+				if(holeLeft && holeRight) {//This is a well
+					rslt += cum;//we sum
+					cum++;//we accumulate
+				}else{//this is not a well but it is an empty cell
+					cum++;//we only accumulate
+				}
+			}
+		}
 		return rslt;
 	}
 
 	int getNpatternDiversity() {
 		//five possible patterns: 1. lh - rh =1, 2. lh - rh > 1,
-		//3. lh - rh = 0, 4. lh - rh = -1, 5. lh -rh < -1.
+		//3. lh - rh = 0, 4. lh - rh = -1, 5. lh -rh < -2.
 		//(lh(rh) is left(right) column height)
+		//If the pattern is higher than 2, it is ignored.
 		Set<Integer> patterns = new HashSet<>();
-		Function<Integer, Integer> sgn = x -> x >= 0 ? 1 : -1;
-		Function<Integer, Integer> truncate = x -> Math.abs(x) < 2 ? x : sgn.apply(x)*x; 
-			
-		for (int i = 0; i < this.width -1; i++) 
-			patterns.add(truncate.apply(colHeights[i] - colHeights[i+1]));
+		for (int i = 0; i < this.width -1; i++)
+			if(!patterns.contains(colHeights[i] - colHeights[i+1]) && Math.abs(colHeights[i] - colHeights[i+1]) <= 2)
+				patterns.add(colHeights[i] - colHeights[i+1]);
 
 		return patterns.size();
 	}
 
-	int getHolesDepth() {
+	int getWellDepth(Pair<Integer, Integer> hc) {
 		//contribution of each hole is 1 + num of holes directly below it, with no fillers
 		// in between. 
-		int rslt = 0;
-		for(Pair<Integer, Integer> hc : holesCords) {
-			rslt++;
+		int rslt = 1;
 			//for each hole directly below add 1 to the rslt.
 			for (int i = hc.getFirst();
 				 holesCords.contains(new Pair<Integer, Integer>(i+1, hc.getSecond()));
 					 i++)
 				rslt++;
-		}
+
+		return rslt;
+	}
+
+	int getHolesDepth() {
+		int rslt = 0;
+
 		return rslt;
 	}
 
@@ -200,7 +214,7 @@ public class TetrisFeatures {
 			int minHight = (c == 0 ? colHeights[1] :
 							c == width-1 ? colHeights[c-1] :
 							Math.min(colHeights[c-1], colHeights[c+1]));
-			if (r > minHight && (! holesCords.contains(new Pair(r, c+1))))
+			if (r < minHight && (! holesCords.contains(new Pair(r, c+1))))
 				rslt += 2;
 		}
 
