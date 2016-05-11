@@ -86,16 +86,10 @@ public class Tetris{
         boolean[][] pieceMatrix = piece.getRotatedPiece(rot);
         int[] pieceHeights = piece.getRotatedPieceHeights(rot);
         int[] pieceHoles = piece.getRotatedPieceHoles(rot);
-        System.out.println("action: " + col+"_"+rot);
-        System.out.println("offset: "+offset);
-        int ncol = pieceMatrix[0].length;
-        for (int c = 0; c < ncol; c++)
-            System.out.println(features.colHeights[c]);
 
-        System.out.println(features.colHeights[col]);
         //make piece part of board:
         int nrow = pieceMatrix.length;
-        ncol = pieceMatrix[0].length;
+        int ncol = pieceMatrix[0].length;
         for (int i = 0; i < nrow; i++)
             for (int j = 0; j < ncol; j++)
                 board[features.colHeights[col] + i + offset][col + j] = pieceMatrix[i][j] || board[features.colHeights[col] + i + offset][col + j];

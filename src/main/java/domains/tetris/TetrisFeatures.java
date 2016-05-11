@@ -227,7 +227,7 @@ public class TetrisFeatures {
 		for (int r = height-1; r >=0; r--)
 			for (int c = 0; c < width; c++)
 				if (board[r][c] && colHeights[c] == 0)
-					colHeights[c] = r;
+					colHeights[c] = r + 1;
 		return colHeights;
 	}
 
