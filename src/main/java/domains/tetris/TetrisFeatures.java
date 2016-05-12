@@ -96,22 +96,18 @@ public class TetrisFeatures {
 		// ToIntBiFunction<Integer, Integer> max = (x, y) -> x > y ? x : y;	
 		// ToIntBiFunction<Integer, Integer> min = (x, y) -> x < y ? x : y;	
 		for (int i = 0; i < this.width; i++) {
-			int maxmin;
-			if (i == 0)
-				maxmin = Math.max(colHeights[1], colHeights[i]);
-			else if (i == this.width-1)
-				maxmin = Math.max(colHeights[i-1], colHeights[i]);
-			else
-				maxmin = Math.max(Math.min(colHeights[i-1], colHeights[i+1]),
-										colHeights[i]);
-			int cum = 1;
-			for (int r = maxmin; r >= colHeights[i] ; r--) { //We iterate from the top of the well to the bottom
+			int heightLeft = i == 0 ? height : colHeights[i-1];
+			int heightRight = i == width - 1 ? height : colHeights[i+1];
+			int maxmin = Math.max(Math.min(heightLeft, heightRight), colHeights[i]);
+			int cum = 0;
+			for (int r = colHeights[i]; r <= maxmin-1 ; r++) { //We iterate from the top of the well to the bottom
 				boolean holeLeft = i == 0 ? false : holesCords.contains(new Pair<>(r, i-1));
 				boolean holeRight = i == width -1 ? false : holesCords.contains(new Pair<>(r, i+1));
-				if(!holeLeft && !holeRight) {//This is a well
-					rslt += cum;//we sum
+				if((!holeLeft && !holeRight) &&
+						heightLeft >= r && heightRight >= r) {//This is a well
 					cum++;//we accumulate
-				}else{//this is not a well but it is an empty cell
+					rslt += cum;//we sum
+				}else{//this is not a well but there was already a well above and it is an empty cell
 					cum++;//we only accumulate
 				}
 			}
@@ -138,8 +134,8 @@ public class TetrisFeatures {
 		int rslt = 1;
 			//for each hole directly below add 1 to the rslt.
 			for (int i = hc.getFirst();
-				 holesCords.contains(new Pair(i+1, hc.getSecond()));
-					 i++)
+				 holesCords.contains(new Pair(i-1, hc.getSecond()));
+					 i--)
 				rslt++;
 
 		return rslt;
