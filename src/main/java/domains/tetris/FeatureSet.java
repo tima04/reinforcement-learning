@@ -8,7 +8,7 @@ public class FeatureSet {
     public static List<Double> make(TetrisFeatures tetrisFeatures, String featureSet){
         List<Double> values = new ArrayList<>();
         if(featureSet.equals("thierry")){
-            values.add((double)tetrisFeatures.landingHeight);
+            values.add(tetrisFeatures.landingHeight);
             values.add((double)tetrisFeatures.nErodedCells);
             values.add((double)tetrisFeatures.rowTransition);
             values.add((double)tetrisFeatures.colTransition);

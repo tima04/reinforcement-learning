@@ -11,12 +11,15 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.math3.util.Pair;
 
+import static domains.tetris.Tetromino.pieces;
+import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 
 
 public class TetrisTest {
 
-    String path = "src/test/resources/tetris/featuresValuesBcts16x10.txt";
+    String stateValuesPath = "src/test/resources/tetris/featureValuesRandom16x10.txt";
+
     List<Pair<Tetris,TetrisAction>> states;
     List<List<Double>> featureValues;
     List<String> featureNames;
@@ -33,7 +36,7 @@ public class TetrisTest {
             states = new ArrayList<>();
             featureValues = new ArrayList<>();
             featureNames = new ArrayList<>();
-            List<String> lines = Files.readAllLines(Paths.get(path));
+            List<String> lines = Files.readAllLines(Paths.get(stateValuesPath));
             String header = lines.get(0);
             String[] featureNamesFile = header.split(",");
             for (int i = 2; i < featureNamesFile.length; i++)
@@ -90,16 +93,90 @@ public class TetrisTest {
         testFeature(8);
     }
 
+    @Test
+    public void testLandingHeightAfterAction(){
+        testStateActionFeature(0);
+    }
+
+
+    @Test
+    public void testErodedCellsAfterAction(){
+        testStateActionFeature(1);
+    }
+
+    @Test
+    public void testRowTransitionsAfterAction(){
+        testStateActionFeature(2);
+    }
+
+    @Test
+    public void testColTransitionsAfterAction(){
+        testStateActionFeature(3);
+    }
+
+    @Test
+    public void testHolesAfterAction(){
+        testStateActionFeature(4);
+    }
+
+    @Test
+    public void testCumWellsAfterAction(){
+        testStateActionFeature(5);
+    }
+
+    @Test
+    public void testHolesDepthAfterAction(){
+        testStateActionFeature(6);
+    }
+
+    @Test
+    public void testRowsWithHolesAfterAction(){
+        testStateActionFeature(7);
+    }
+
+    @Test
+    public void testPatternDiversityAfterAction(){
+        testStateActionFeature(8);
+    }
+
+    @Test
+    public void testNextState() {
+        for (int i = 0; i < states.size() - 1; i++) {
+            Pair<Tetris, TetrisAction> stateActionPair = states.get(i);
+            Tetris state = stateActionPair.getFirst();
+            TetrisAction action = stateActionPair.getSecond();
+            state.nextState(action);
+            state.piece = states.get(i+1).getFirst().piece;
+            if (!state.features.gameOver) {
+                System.out.println(state.getStringKey());
+                assertEquals("Expected: " + states.get(i + 1).getFirst().getStringKey() + " got:" + state.getStringKey(), states.get(i + 1).getFirst().getStringKey(), state.getStringKey());
+            }
+        }
+    }
+
     private void testFeature(int featureNumber) {
         for (int i = 0; i < states.size(); i++) {
             Pair<Tetris, TetrisAction> stateActionPair = states.get(i);
             Tetris state = stateActionPair.getFirst();
-//            TetrisAction action = stateActionPair.getSecond();
-//            state.nextState(action);
             List<Double> valuesState = FeatureSet.make(state.features, "thierry");
             List<Double> valuesStateFile = featureValues.get(i);
             System.out.println(state.getStringKey());
             assertTrue("Error in feature " + featureNames.get(featureNumber)+": expected: "+valuesStateFile.get(featureNumber)+", found: "+valuesState.get(featureNumber) +"\n state: " + state.getStringKey(), Math.abs(valuesState.get(featureNumber) - valuesStateFile.get(featureNumber)) < epsilon);
+        }
+    }
+
+    private void testStateActionFeature(int featureNumber) {
+        for (int i = 0; i < states.size() - 1; i++) {
+            Pair<Tetris, TetrisAction> stateActionPair = states.get(i);
+            Tetris state = stateActionPair.getFirst();
+            TetrisAction action = stateActionPair.getSecond();
+            state.nextState(action);
+            if (!state.features.gameOver) {
+                List<Double> valuesState = FeatureSet.make(state.features, "thierry");
+                List<Double> valuesStateFile = featureValues.get(i + 1);
+                System.out.println(state.getStringKey());
+                assertTrue("Error in feature " + featureNames.get(featureNumber) + ": expected: " + valuesStateFile.get(featureNumber) + ", found: " + valuesState.get(featureNumber) + "\n state: " + state.getStringKey(), Math.abs(valuesState.get(featureNumber) - valuesStateFile.get(featureNumber)) < epsilon);
+            }
         }
     }
 }

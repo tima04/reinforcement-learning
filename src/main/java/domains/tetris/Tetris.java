@@ -87,20 +87,27 @@ public class Tetris{
         int[] pieceHeights = piece.getRotatedPieceHeights(rot);
         int[] pieceHoles = piece.getRotatedPieceHoles(rot);
 
-        //make piece part of board:
-        int nrow = pieceMatrix.length;
-        int ncol = pieceMatrix[0].length;
-        for (int i = 0; i < nrow; i++)
-            for (int j = 0; j < ncol; j++)
-                board[features.colHeights[col] + i + offset][col + j] = pieceMatrix[i][j] || board[features.colHeights[col] + i + offset][col + j];
-
-
+        int[] oldColHeights = features.colHeights;
+        int[] newColHeightsBeforeClearing = getNewColHeights(col, offset, pieceHeights);
 
         features = getTetrisFeatures(col, offset, pieceHeights, pieceHoles, pieceMatrix);
+
+        //make piece part of board:
+        Pair<List<Integer>, Integer> clearedRowsAndCells = clearedRows(col, pieceMatrix, newColHeightsBeforeClearing);
+        integratePieceIntoBoard(board, pieceMatrix, col, offset, oldColHeights);
+        clearRows(board, clearedRowsAndCells);
 
         if(random == null)
             random = new Random();
         piece = Tetromino.pieces.get(random.nextInt(Tetromino.pieces.size()));
+    }
+
+    private void integratePieceIntoBoard(boolean[][] board, boolean[][] pieceMatrix, int col, int offset, int[] colheights) {
+        int nrow = pieceMatrix.length;
+        int ncol = pieceMatrix[0].length;
+        for (int i = 0; i < nrow; i++)
+            for (int j = 0; j < ncol; j++)
+                board[colheights[col] + i + offset][col + j] = pieceMatrix[i][j] || board[colheights[col] + i + offset][col + j];
     }
 
     /**
@@ -172,6 +179,15 @@ public class Tetris{
         return new TetrisFeatures.Builder(height, width, 0, 0, 0, true).board(board).build();
     }
 
+    /**
+     * It measures all the new feature values.
+     * @param col
+     * @param offset
+     * @param pieceHeights
+     * @param pieceHoles
+     * @param rotatedPiece
+     * @return
+     */
     private TetrisFeatures getTetrisFeatures(int col, int offset, int[] pieceHeights, int[] pieceHoles, boolean[][] rotatedPiece){
         int[] newColHeights = getNewColHeights(col, offset, pieceHeights);
         Set<Pair<Integer, Integer>> newHoleCoordinates = getHolesCoordinates(col, pieceHoles, newColHeights, pieceHeights, features.holesCords);
@@ -181,7 +197,39 @@ public class Tetris{
         if(Compute.max(newColHeights) > height)
             gameOver = true;
 
+        Pair<List<Integer>, Integer> clearedRowsAndCells = clearedRows(col, rotatedPiece, newColHeights);
+
+        if(!gameOver && clearedRowsAndCells.getFirst().size() > 0) {
+            boolean[][] boardCopy = boardCopy();
+            integratePieceIntoBoard(boardCopy, rotatedPiece, col, offset, features.colHeights);
+            clearRows(boardCopy, clearedRowsAndCells);
+            return new TetrisFeatures.Builder(height, width, clearedRowsAndCells.getFirst().size(), clearedRowsAndCells.getSecond(), landingHeight, gameOver).board(boardCopy).build();
+        }
+
         return new TetrisFeatures.Builder(height, width, 0, 0, landingHeight, gameOver).colHeights(newColHeights).holesCords(newHoleCoordinates).build();
+    }
+
+    private boolean[][] boardCopy() {
+        boolean[][] boardCopy = new boolean[height][width];
+        for (int r = 0; r < height; r++) {
+            for (int c = 0; c < width; c++) {
+                boardCopy[r][c] = board[r][c];
+            }
+        }
+        return boardCopy;
+    }
+
+    private void clearRows(boolean[][] board, Pair<List<Integer>, Integer> clearedRowsAndCells) {
+        for (int i = 0; i < clearedRowsAndCells.getFirst().size(); i++) {//Clear Lines
+            int row = clearedRowsAndCells.getFirst().get(i) - i;
+            for (int r = row; r < height - 1; r++) {
+                for (int c = 0; c < width; c++) {
+                    board[r][c] = board[r + 1][c];
+                }
+            }
+            for (int c = 0; c < width; c++)
+                board[height - 1][c] = false;
+        }
     }
 
     /**
@@ -248,6 +296,46 @@ public class Tetris{
         return maxNewHeight;
     }
 
+    /**
+     * Returns the index of the rows that are cleared and the number of bricks of the piece.
+     * @param col
+     * @param rotatedPiece
+     * @param newHeights
+     * @return
+     */
+    private Pair<List<Integer>, Integer> clearedRows(int col, boolean[][] rotatedPiece, int[] newHeights) {
+        List<Integer> fullRows = new ArrayList<>();
+        int pieceHeight = rotatedPiece.length;
+        int pieceWidth = rotatedPiece[0].length;
+        int totalBrickPieces = 0;
+        int maxNewHeight = maxNewHeight(col, rotatedPiece, newHeights);
+        int initRow = maxNewHeight - pieceHeight;
+        int finalRow = maxNewHeight;
+        for (int r = initRow; r < finalRow; r++) {
+            boolean fullRow = true;
+            int brickPieces = 0;
+            for (int c = 0; c < width; c++) {
+                if (!board[r][c]) {//Piece has to be where board is still false.
+                    if (c >= col && c - col < pieceWidth){//Piece Territory
+                        if (!rotatedPiece[r - initRow][c - col]) {
+                            fullRow = false;
+                            break;
+                        }else{
+                            brickPieces++;
+                        }
+                    }else{
+                        fullRow = false;
+                        break;
+                    }
+                }
+            }
+            if(fullRow) {
+                fullRows.add(r);
+                totalBrickPieces += brickPieces;
+            }
+        }
+        return new Pair(fullRows,totalBrickPieces);
+    }
 
     public String getStringKey() {
         StringBuilder stringBuilder = new StringBuilder();
