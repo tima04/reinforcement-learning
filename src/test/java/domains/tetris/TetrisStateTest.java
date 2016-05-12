@@ -11,16 +11,16 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.math3.util.Pair;
 
-import static domains.tetris.Tetromino.pieces;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 
 
-public class TetrisTest {
+public class TetrisStateTest {
 
-    String stateValuesPath = "src/test/resources/tetris/featureValuesRandom16x10.txt";
+//    String stateValuesPath = "src/test/resources/tetris/featureValuesRandom16x10_small.txt";
+    String stateValuesPath = "src/test/resources/tetris/featureValuesBcts16x10.txt";
 
-    List<Pair<Tetris,TetrisAction>> states;
+    List<Pair<TetrisState,TetrisAction>> states;
     List<List<Double>> featureValues;
     List<String> featureNames;
 
@@ -45,7 +45,7 @@ public class TetrisTest {
             for (int i = 1; i < lines.size(); i++) {
                 String[] items = lines.get(i).split(",");
                 String[] action = items[1].split("_");
-                states.add(new Pair(Tetris.parseState(items[0]), new TetrisAction(Integer.parseInt(action[0]), Integer.parseInt(action[1]))));
+                states.add(new Pair(TetrisState.parseState(items[0]), new TetrisAction(Integer.parseInt(action[0]), Integer.parseInt(action[1]))));
                 List<Double> featureValuesState = new ArrayList<>();
                 for (int j = 2; j < items.length; j++) {
                     featureValuesState.add(Double.parseDouble(items[j]));
@@ -142,8 +142,8 @@ public class TetrisTest {
     @Test
     public void testNextState() {
         for (int i = 0; i < states.size() - 1; i++) {
-            Pair<Tetris, TetrisAction> stateActionPair = states.get(i);
-            Tetris state = stateActionPair.getFirst();
+            Pair<TetrisState, TetrisAction> stateActionPair = states.get(i);
+            TetrisState state = stateActionPair.getFirst();
             TetrisAction action = stateActionPair.getSecond();
             state.nextState(action);
             state.piece = states.get(i+1).getFirst().piece;
@@ -156,9 +156,9 @@ public class TetrisTest {
 
     private void testFeature(int featureNumber) {
         for (int i = 0; i < states.size(); i++) {
-            Pair<Tetris, TetrisAction> stateActionPair = states.get(i);
-            Tetris state = stateActionPair.getFirst();
-            List<Double> valuesState = FeatureSet.make(state.features, "thierry");
+            Pair<TetrisState, TetrisAction> stateActionPair = states.get(i);
+            TetrisState state = stateActionPair.getFirst();
+            List<Double> valuesState = TetrisFeatureSet.make(state.features, "thierry");
             List<Double> valuesStateFile = featureValues.get(i);
             System.out.println(state.getStringKey());
             assertTrue("Error in feature " + featureNames.get(featureNumber)+": expected: "+valuesStateFile.get(featureNumber)+", found: "+valuesState.get(featureNumber) +"\n state: " + state.getStringKey(), Math.abs(valuesState.get(featureNumber) - valuesStateFile.get(featureNumber)) < epsilon);
@@ -167,12 +167,12 @@ public class TetrisTest {
 
     private void testStateActionFeature(int featureNumber) {
         for (int i = 0; i < states.size() - 1; i++) {
-            Pair<Tetris, TetrisAction> stateActionPair = states.get(i);
-            Tetris state = stateActionPair.getFirst();
+            Pair<TetrisState, TetrisAction> stateActionPair = states.get(i);
+            TetrisState state = stateActionPair.getFirst();
             TetrisAction action = stateActionPair.getSecond();
             state.nextState(action);
             if (!state.features.gameOver) {
-                List<Double> valuesState = FeatureSet.make(state.features, "thierry");
+                List<Double> valuesState = TetrisFeatureSet.make(state.features, "thierry");
                 List<Double> valuesStateFile = featureValues.get(i + 1);
                 System.out.println(state.getStringKey());
                 assertTrue("Error in feature " + featureNames.get(featureNumber) + ": expected: " + valuesStateFile.get(featureNumber) + ", found: " + valuesState.get(featureNumber) + "\n state: " + state.getStringKey(), Math.abs(valuesState.get(featureNumber) - valuesStateFile.get(featureNumber)) < epsilon);

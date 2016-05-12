@@ -3,7 +3,7 @@ package domains.tetris;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FeatureSet {
+public class TetrisFeatureSet {
 
     public static List<Double> make(TetrisFeatures tetrisFeatures, String featureSet){
         List<Double> values = new ArrayList<>();

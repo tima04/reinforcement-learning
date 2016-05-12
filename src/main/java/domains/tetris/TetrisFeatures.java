@@ -147,9 +147,11 @@ public class TetrisFeatures {
 		for (Pair<Integer, Integer> hole : holesCords) {
 			int r = hole.getFirst();
 			int c = hole.getSecond();
+			if (holesCords.contains(new Pair(r+1, c)))
+				continue;
 			int i = r+1;
-			for (; holesCords.contains(new Pair(i, c)); i++);
-			rslt += (i - r);
+			for (; (! holesCords.contains(new Pair(i, c))) && i < colHeights[c]; i++);
+			rslt += (i - r - 1);
 		}
 		return rslt;
 	}
@@ -180,7 +182,11 @@ public class TetrisFeatures {
 			if ((!holesCords.contains(new Pair(hole.getFirst(), hole.getSecond()+1))) &&
 				!isOpen(hole))
 				rslt += 2;
+
+			if(isBelowFloatingCell(hole))
+				rslt -= 2;
 		}
+
 
 		//each delta diff in consecutive colHeights will contribute delta.
 		rslt += sumHeightDiff;
@@ -191,6 +197,22 @@ public class TetrisFeatures {
 		rslt += 2*this.height - colHeights[0] - colHeights[colHeights.length - 1];
 
 		return rslt;
+	}
+
+	private boolean isBelowFloatingCell(Pair<Integer, Integer> hole) {
+		//helper function for getRowTransition.
+		// A floating piece happens in rare cases. It is a filled cell that is not supported by any filled cell.
+		// A hole is below a floating piece if it is higher than its left and right column height.
+		int r = hole.getFirst();
+		int c = hole.getSecond();
+
+		if (c == 0 || c == width-1) //holes at boundaries can not be below floating pieces.
+			return false;
+
+		if(colHeights[c-1] <= r && colHeights[c+1] <= r)
+			return true;
+
+		return false;
 	}
 
 	boolean isOpen(Pair<Integer, Integer> hole) {
@@ -204,8 +226,8 @@ public class TetrisFeatures {
 		int r = hole.getFirst();
 		int c = hole.getSecond();
 
-		if (c == 0 || c == width-1) //holes at boundaries can not be open.
-			return false;
+//		if (c == 0 || c == width-1) //holes at boundaries can not be open.
+//			return false;
 
 		//get columns of left and right most sibling. 
 		int lc = c; //column of left-most sibling.

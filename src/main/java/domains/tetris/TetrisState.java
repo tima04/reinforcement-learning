@@ -6,7 +6,7 @@ import util.Compute;
 
 import java.util.*;
 
-public class Tetris{
+public class TetrisState {
 
     boolean[][] board;
     public static int height = 16, width = 10, matHeight = height + 4;
@@ -15,7 +15,7 @@ public class Tetris{
     String stringKey;
     Random rand;
 
-    public Tetris(Random rand){
+    public TetrisState(Random rand){
         int m = matHeight, n = width;
         board = new boolean[m][n];
 
@@ -32,14 +32,19 @@ public class Tetris{
         piece = Tetromino.pieces.get(rand.nextInt(Tetromino.pieces.size()));
     }
 
-    Tetris(boolean[][] board, TetrisFeatures features, Tetromino piece){
+    TetrisState(boolean[][] board, TetrisFeatures features, Tetromino piece){
         this.board = board;
         this.features = features;
         this.piece = piece;
     }
 
-    public static Tetris parseState(String stateStr) {
-        boolean[][] board = new boolean[Tetris.matHeight][Tetris.width];
+    /**
+     * Creates an object from a String representation.
+     * @param stateStr
+     * @return
+     */
+    public static TetrisState parseState(String stateStr) {
+        boolean[][] board = new boolean[TetrisState.matHeight][TetrisState.width];
         String[] rows = stateStr.split("\\|");
         Tetromino piece = Tetromino.getPiece(rows[0]);
         for (int i = 1; i < rows.length; i++) {
@@ -51,7 +56,7 @@ public class Tetris{
                 }
             }
         }
-        return new Tetris(board, getTetrisFeatures(board), piece);
+        return new TetrisState(board, getTetrisFeatures(board), piece);
     }
 
     public void nextState(TetrisAction a){
