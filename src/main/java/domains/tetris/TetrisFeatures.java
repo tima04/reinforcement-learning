@@ -10,6 +10,8 @@ import java.lang.RuntimeException;
 import org.apache.commons.math3.analysis.function.Max;
 import org.apache.commons.math3.util.Pair;
 
+import domains.tetris.TetrisFeatures.Builder;
+
 public class TetrisFeatures {
 
 	public final int height; //board height
@@ -33,7 +35,13 @@ public class TetrisFeatures {
 	public final int nBrickCleared;
 
 	public static void main(String[] args) {
-		System.out.println("text: foo");
+		int[] ch = {1, 1, 2, 3};
+		Set<Pair<Integer, Integer>> set = new HashSet<>();
+		set.add(new Pair(0,2));
+		set.add(new Pair(0,3));
+		set.add(new Pair(1,3));
+		TetrisFeatures tf = new Builder(4, 4, 0, 0, 0, true).colHeights(ch).holesCords(set).build();
+		System.out.println("text:" + tf.holesDepth);
 	}
 	
 	TetrisFeatures(Builder builder) {
@@ -67,47 +75,6 @@ public class TetrisFeatures {
 		this.nErodedCells = nClearedLines * nBrickCleared;
 		this.holesDepth =  getHolesDepth();
 		this.nPatternDiversity = getNpatternDiversity();
-	}
-
-	public static class Builder {
-
-		//required parameters, raise error if not set
-		private int height; 
-		private int width;
-		private boolean gameOver; 
-		private int nClearedLines; 
-		private int nBrickCleared;
-		private double landingHeight;
-
-		//optional either a and b or c must be given.
-		private int[] colHeights = null; //a 
-		private Set<Pair<Integer, Integer>> holesCords = null; //b
-		private boolean[][] board = null; //c
-
-		public Builder(int height, int width, int nClearedLines, int nBrickCleared, double landingHeight,
-					   boolean gameOver) {
-			this.height = height;
-			this.width = width;
-			this.nClearedLines = nClearedLines;
-			this.nBrickCleared = nBrickCleared;
-			this.gameOver = gameOver;
-			this.landingHeight = landingHeight;
-		}
-
-		public Builder holesCords(Set<Pair<Integer, Integer>> val) {
-			this.holesCords = val;
-			return this;
-		}
-
-		public Builder colHeights(int[] val) { this.colHeights = val; return this;}
-
-		public Builder board(boolean[][] val) { this.board = val; return this;}
-
-		public TetrisFeatures build() {
-			if ((holesCords == null && colHeights == null) && board == null)
-				throw new RuntimeException("please either set board or (holesCords and colHeights)!");
-			return new TetrisFeatures(this);
-		}
 	}
 
 	int getCumWells() {
@@ -175,13 +142,14 @@ public class TetrisFeatures {
 	}
 
 	int getHolesDepth() {
-		//for each hole count num of rows above first filled cell is, sum it over holes.
+		//for each hole count num of rows above first filled cell, sum it over all holes.
 		int rslt = 0;
 		for (Pair<Integer, Integer> hole : holesCords) {
 			int r = hole.getFirst();
 			int c = hole.getSecond();
-			for (int i = r+1; holesCords.contains(new Pair(i, c)); i++)
-				rslt += i - r;
+			int i = r+1;
+			for (; holesCords.contains(new Pair(i, c)); i++);
+			rslt += (i - r);
 		}
 		return rslt;
 	}
@@ -287,6 +255,47 @@ public class TetrisFeatures {
 				if (!board[row][col])
 					rslt.add(new Pair<Integer, Integer> (row, col));
 		return rslt;
+	}
+
+	public static class Builder {
+
+		//required parameters, raise error if not set
+		private int height; 
+		private int width;
+		private boolean gameOver; 
+		private int nClearedLines; 
+		private int nBrickCleared;
+		private double landingHeight;
+
+		//optional either a and b or c must be given.
+		private int[] colHeights = null; //a 
+		private Set<Pair<Integer, Integer>> holesCords = null; //b
+		private boolean[][] board = null; //c
+
+		public Builder(int height, int width, int nClearedLines, int nBrickCleared, double landingHeight,
+					   boolean gameOver) {
+			this.height = height;
+			this.width = width;
+			this.nClearedLines = nClearedLines;
+			this.nBrickCleared = nBrickCleared;
+			this.gameOver = gameOver;
+			this.landingHeight = landingHeight;
+		}
+
+		public Builder holesCords(Set<Pair<Integer, Integer>> val) {
+			this.holesCords = val;
+			return this;
+		}
+
+		public Builder colHeights(int[] val) { this.colHeights = val; return this;}
+
+		public Builder board(boolean[][] val) { this.board = val; return this;}
+
+		public TetrisFeatures build() {
+			if ((holesCords == null && colHeights == null) && board == null)
+				throw new RuntimeException("please either set board or (holesCords and colHeights)!");
+			return new TetrisFeatures(this);
+		}
 	}
 }
 
