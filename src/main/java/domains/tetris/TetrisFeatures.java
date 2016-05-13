@@ -142,7 +142,8 @@ public class TetrisFeatures {
 	}
 
 	int getHolesDepth() {
-		//for each hole count num of rows above first filled cell, sum it over all holes.
+		//depth of a hole is the height of the first filled cell wrt to the hole above it.
+		// this method returns sum of depth of all holes.
 		int rslt = 0;
 		for (Pair<Integer, Integer> hole : holesCords) {
 			int r = hole.getFirst();
