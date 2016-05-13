@@ -76,3 +76,4 @@ build
 GTAGS
 GPATH
 GRTAGS
+src/main/resources/
