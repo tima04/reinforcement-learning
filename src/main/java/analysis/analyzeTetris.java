@@ -1,9 +1,8 @@
 package analysis;
 
-
 import domains.tetris.TetrisAction;
 import domains.tetris.TetrisState;
-import javafx.util.Pair;
+import org.apache.commons.math3.util.Pair;
 import util.ReservoirSample;
 
 import java.io.File;
@@ -16,7 +15,7 @@ import java.util.Random;
 
 public class analyzeTetris {
 
-    static String path = "src/main/resources/tetris/rawGames/bcts/";
+    static String path = "src/main/resources/tetris/rawGames/bcts_small/";
     static String suffix = "Bcts";
     static int numSamples = 10000;
 

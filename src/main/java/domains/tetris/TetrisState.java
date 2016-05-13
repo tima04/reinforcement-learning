@@ -11,7 +11,7 @@ public class TetrisState {
     boolean[][] board;
     public static int height = 16, width = 10, matHeight = height + 4;
     Tetromino piece;
-    TetrisFeatures features;
+    public TetrisFeatures features;
     String stringKey;
     Random rand;
 
