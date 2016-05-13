@@ -70,3 +70,9 @@ gradle*
 build
 **/.DS_Store
 
+*build.gradle* ## Simon does not wants it.
+
+### tag files ###
+GTAGS
+GPATH
+GRTAGS
