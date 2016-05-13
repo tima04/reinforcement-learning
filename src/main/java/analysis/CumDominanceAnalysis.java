@@ -3,14 +3,13 @@ package analysis;
 
 import domains.tetris.*;
 import org.apache.commons.math3.util.Pair;
-import report.GeneralReport;
 import util.DistinctCounter;
 import util.LinearDecisionRule;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class DominanceAnalysis implements Analysis{
+public class CumDominanceAnalysis implements Analysis{
 
     GeneralReport report;
     List<Double> weightVector;
@@ -22,7 +21,7 @@ public class DominanceAnalysis implements Analysis{
         this.weightVector = TetrisWeightVector.make("bcts");
         this.weightArray = new double[weightVector.size()];
         for (int i = 0; i < weightArray.length; i++)
-                weightArray[i] = weightVector.get(i);
+            weightArray[i] = weightVector.get(i);
         report.addLine("placements,distinct,pareto,pareto_distinct");
     }
 
@@ -42,7 +41,7 @@ public class DominanceAnalysis implements Analysis{
             }
         }
         //count pareto
-        boolean[] pareto = LinearDecisionRule.paretoDominanceSet(weightArray, objects);
+        boolean[] pareto = LinearDecisionRule.paretoCumDominanceSet(weightArray, objects);
         int numPareto = 0;
         for (int i = 0; i < pareto.length; i++)
             if (pareto[i])

@@ -3,7 +3,6 @@ package analysis;
 
 import domains.tetris.*;
 import org.apache.commons.math3.util.Pair;
-import report.GeneralReport;
 import util.Compute;
 import util.DistinctCounter;
 import util.UtilAmpi;
