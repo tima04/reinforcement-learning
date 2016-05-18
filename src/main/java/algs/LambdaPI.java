@@ -1,100 +1,135 @@
-package ampi;
+package algs;
 
-import algorta.domains.tetris.agent.AgentLinear;
-import algorta.rl.DomainKnown;
-import algorta.scratch.util.Compute;
-import algorta.util.EvaluateLinearAgent;
-import ampi.Util.ActionType;
-import fr.inria.optimization.cmaes.CMAEvolutionStrategy;
-import fr.inria.optimization.cmaes.CMASolution;
-import fr.inria.optimization.cmaes.fitness.IObjectiveFunction;
-import org.apache.commons.lang3.ArrayUtils;
+
+import domains.tetris.EvaluateLinearAgent;
 import org.apache.commons.math3.linear.SingularMatrixException;
-import org.apache.commons.math3.util.Pair;
+import util.UtilAmpi;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class LambdaPI {
+
+
+	public static void main(String[] arg){
+		List<Double> initialWeights = new ArrayList<>();
+		initialWeights.add(0.);
+		initialWeights.add(-10.);
+		initialWeights.add(-1.);
+		for (int i = 0; i < 10; i++) {
+			initialWeights.add(0.);
+		}
+		for (int i = 0; i < 9; i++) {
+			initialWeights.add(0.);
+		}
+		String featureSet = "bertsekas";
+		int numIt = 30;
+		double gamma = 0.9;
+		double lambda = 0.6;
+		int sampleSize = 500000;
+		setOutput("lpi_"+featureSet+"_"+sampleSize+"_"+lambda+"_"+arg[0]);
+		UtilAmpi.ActionType  actionType = UtilAmpi.ActionType.ANY;
+		if(arg[0].equals("dom"))
+			actionType = UtilAmpi.ActionType.DOM;
+		else if (arg[0].equals("cum"))
+			actionType = UtilAmpi.ActionType.CUMDOM;
+
+		LambdaPI lambdaPI = new LambdaPI(new Game(1), "bertsekas", numIt, gamma, lambda, initialWeights, sampleSize, actionType);
+		lambdaPI.iterate();
+	}
+
+	private static void setOutput(String fileName) {
+		Date yourDate = new Date();
+		SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MM-dd-hh:mm");
+		String date = DATE_FORMAT.format(yourDate);
+		//redirecting output stream
+		fileName += "_" + date + "_"+System.currentTimeMillis()+ ".log";
+		//file = file + System.currentTimeMillis();
+		try {
+			System.out.println(fileName);
+//			System.setOut(new PrintStream(new File("src/main/resources/tetris/scores/lpi/"+fileName)));
+			System.setOut(new PrintStream(new File("scores/lpi/"+fileName)));
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 
 	final static String paretoFeatureSet = "bcts";
 	final static double[] paretoWeights = new double[]{-13.08, -19.77, -9.22, -10.49, 6.60, -12.63, -24.04, -1.61};
 
 
 	int maxSim, sampleSize, numFeatures;
-	String featureSet, reportName;
-	double gamma, lambda, TOLERANCE = 10e-6; //discount factor
+	String featureSet;
+	double gamma, lambda; //discount factor
 	List<Double> beta = null;
-	GameTetris game = null;
+	Game game = null;
 
-	public ActionType actionType;
-	public List<Object> rolloutSet = null;
+	public UtilAmpi.ActionType actionType;
 	Random random;
-	public DomainKnown domainKnown;
 
-
-	int height;
-	int width;
-
-	public LambdaPI(GameTetris game, String featureSet, int maxSim,
+	public LambdaPI(Game game, String featureSet, int maxSim,
 					double gamma, double lambda, List<Double> beta, int sampleSize,
-					ActionType actionType, String reportName, int height, int width) {
+					UtilAmpi.ActionType actionType) {
 
 		this.game = game;
 		this.maxSim = maxSim;
 		this.gamma = gamma;
 		this.beta = beta;
-		this.rolloutSet = new ArrayList<Object>();
 		this.actionType = actionType;
-		this.reportName = reportName;
-		this.height = height;
-		this.width = width;
+
 		this.lambda = lambda;
 		this.random = new Random();
 		this.sampleSize= sampleSize;
 		this.featureSet = featureSet;
 		this.numFeatures = game.getFeatureNames(featureSet).size();
 
+		System.out.println("beta: " + beta);
 		System.out.println("****************************");
 		System.out.println("performance in 100 rounds: ");
 		double[] betaVector = new double[beta.size()];
 		for (int i = 0; i < betaVector.length; i++)
 			betaVector[i] = beta.get(i);
-		EvaluateLinearAgent.gamesTetris(100, 1, featureSet, beta, "", height, width);
+		EvaluateLinearAgent.gamesTetris(100, random, featureSet, beta, actionType, paretoFeatureSet, paretoWeights, true);
 		System.out.println("****************************");
 	}
 
 
 	public void iterate() {
-		for (int i = 0; i <= maxSim; i++) {
+		for (int i = 0; i < maxSim; i++) {
 			long t0 = System.currentTimeMillis();
 
-			List<Object> states = game.getRandomTrajectory(sampleSize, beta, featureSet, actionType); //sample trajectories
+			List<Object> states = game.getSampleTrajectory(sampleSize, beta, featureSet, actionType); //sample trajectories
 			double td_sum = 0;
 			double[] ys = new double[numFeatures];
 			double[][] xs = new double[numFeatures][numFeatures];
 			double sampleWeight = 1;
+
 			for (int j = states.size()-1; j > 0; j--) {//loop backwards
 
 				Object stateBefore = states.get(j-1);
 				Object state = states.get(j);
 
 				List<Double> stateBeforeFeatureValues = game.getFeatureValues(featureSet, stateBefore);
-				double stateBeforeEstimatedValue = Util.dotproduct(stateBeforeFeatureValues, beta);
+				double stateBeforeEstimatedValue = UtilAmpi.dotproduct(stateBeforeFeatureValues, beta);
 
 				List<Double> stateFeatureValues = game.getFeatureValues(featureSet, state);
-				double stateEstimatedValue = Util.dotproduct(stateFeatureValues, beta);
+				double stateEstimatedValue = UtilAmpi.dotproduct(stateFeatureValues, beta);
 
 				if(game.isGameover(stateBefore))
 					stateBeforeEstimatedValue = 0;
 				// If the state before is the last state of its trajectory,
-				// then the previous value is 0.
+//				 then the previous value is 0.
 
 				td_sum = calculateDt(state, stateEstimatedValue, stateBeforeEstimatedValue) + lambda * td_sum;
 
 				//if state is gameover, a new trajectory begins and we restart td_sum.
 				if(game.isGameover(state)) {
 					td_sum = 0;
-//					stateEstimatedValue = stateBeforeEstimatedValue;
+					stateEstimatedValue = stateBeforeEstimatedValue;
 				}
 
 
@@ -109,7 +144,7 @@ public class LambdaPI {
 
 			List<Double> newbeta;
 			try {
-				newbeta = Util.regress(ys, xs);
+				newbeta = UtilAmpi.regress(ys, xs);
 			} catch(SingularMatrixException e) {
 				System.out.println("singular matrix :-(");
 				newbeta = this.beta;
@@ -119,10 +154,10 @@ public class LambdaPI {
 			System.out.println("beta: " + beta);
 
 			// log
-			int round = 20;
+			int round = 100;
 			System.out.println("****************************");
 			System.out.println(String.format("performance in %s rounds: ", round));
-			EvaluateLinearAgent.gamesTetris(round, 1, featureSet, beta, "", height, width, actionType, paretoFeatureSet, paretoWeights);
+			EvaluateLinearAgent.gamesTetris(round, random, featureSet, beta, actionType, paretoFeatureSet, paretoWeights, true);
 			System.out.println(String.format("This iteration took: %s seconds", (System.currentTimeMillis() - t0)/(1000.0)));
 			System.out.println("****************************");
 		}

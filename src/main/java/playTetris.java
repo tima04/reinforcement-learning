@@ -1,7 +1,4 @@
-import domains.tetris.TetrisAction;
-import domains.tetris.TetrisFeatureSet;
-import domains.tetris.TetrisFeatures;
-import domains.tetris.TetrisState;
+import domains.tetris.*;
 import org.apache.commons.math3.util.Pair;
 import util.Compute;
 import util.UtilAmpi;
@@ -22,6 +19,12 @@ public class playTetris {
     weights.add(-12.63);
     weights.add(-24.04);
     weights.add(-1.61);
+
+        //GOOD BERTSEKAS WEIGHTS
+//    weights = Arrays.asList(40.914491962098424, -12.386027577874849, -0.25583141726059533, 1.3742221011665643, -0.6522445616294172, 0.1585344309818091, 0.0890114208183651, -0.4191123766016942, 0.2901089535745248, -0.04948048093202312, 0.4255545588419517, -1.6234399017909857, 2.38811170490406, -1.6671647196065562, -1.306600082158671, -1.7454591408042213, -2.3725312042045488, -2.047968378262172, -1.7759209496410264, -2.040040418547827, -1.7767892580624305, -2.8295926639570084);
+
+        EvaluateLinearAgent.gamesTetris(10, new Random(), "bertsekas", weights, UtilAmpi.ActionType.ANY, "none", new double[]{}, true);
+
 
         Random random = new Random(1);
 
@@ -53,19 +56,9 @@ public class playTetris {
                     state.nextState(0, 0);
                     break;
                 }
-    //                int actionIndex = pickActionDom(state, weights, random, actions);
-    //                int actionIndex = pickActionDoubleCumDom(state, weights, random, actions);
-    //                int actionIndex = pickActionRandom(random, actions);
-    //                int actionIndex = pickActionLex(state, weights, featureOrder, random, actions);
-                int actionIndex = pickActionGreedy(weights, random, actions);
-    //                int actionIndex = pickActionSingleCue(state, weights[0], featureOrder[0], random, actions);
 
-    //                int randomCue = random.nextInt(featureOrder.length);
-    //                int actionIndex = pickActionSingleCueCumDom(state, weights, weights[randomCue], featureOrder[randomCue], random, actions);
-    //                int actionIndex = pickActionSingleCueDom(state, weights, weights[randomCue], featureOrder[randomCue], random, actions);
-
-    //                int actionIndex = pickActionDoubleCumDom(weights, random, actions);
-
+                int actionIndex = pickActionRandom(random, actions);
+//                int actionIndex = pickActionGreedy(weights, random, actions);
                 TetrisAction action  = actions.get(actionIndex).getFirst();
     //                detailedReport.addLine(state.getString()+","+action.col+"_"+action.rot);
     //                detailedReport.generate();
@@ -93,6 +86,10 @@ public class playTetris {
     //        System.out.println("Total steps: " + totalSteps);
         System.out.println("mean: " +totalScore/numGames);
 
+    }
+
+    private static int pickActionRandom(Random random, List<Pair<TetrisAction, TetrisFeatures>> actions) {
+        return random.nextInt(actions.size());
     }
 
     static int pickActionGreedy(List<Double> weights, Random random, List<Pair<TetrisAction, TetrisFeatures>> actions){

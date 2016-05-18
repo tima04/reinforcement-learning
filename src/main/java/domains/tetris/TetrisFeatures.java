@@ -17,13 +17,13 @@ public class TetrisFeatures {
 	public final int height; //board height
 	public final int width; //board width
 	public final int[] colHeights;
+	public final int[] colHeightsDiff;
 	public final Set<Pair<Integer, Integer>> holesCords;
 	public final int colTransition;
 	public final int rowTransition;
 	public final int nRowsWithHoles;
 	public final double landingHeight;
 	public final int cumWells;
-	public final int nColDiff;
 	public final int pileHeight; //max col height;
 	public final boolean gameOver;
 	public final int holesDepth;
@@ -33,6 +33,13 @@ public class TetrisFeatures {
 	public final int nPatternDiversity;
 	public final int nClearedLines;
 	public final int nBrickCleared;
+	public final double averageHeight;
+
+	public final TetrisFeatures oldFeatures;
+	public final int pileHeightDelta;
+	public final int nHolesDelta;
+	public final double averageHeightDelta;
+	public final int sumHeightDiffDelta;
 
 	public static void main(String[] args) {
 		int[] ch = {1, 1, 2, 3};
@@ -56,8 +63,6 @@ public class TetrisFeatures {
 			this.colHeights = builder.colHeights;
 			this.holesCords = builder.holesCords;
 		}
-		
-		this.gameOver = builder.gameOver;
 		this.nClearedLines = builder.nClearedLines;
 		this.nBrickCleared = builder.nBrickCleared;
 		this.nRowsWithHoles = holesCords
@@ -66,15 +71,30 @@ public class TetrisFeatures {
 			.collect(Collectors.toSet()).size();
 		this.landingHeight = builder.landingHeight;
 		this.cumWells = getCumWells();
-		this.nColDiff = 0;
+		this.colHeightsDiff = getColDiff();
 		this.pileHeight = Arrays.stream(colHeights).max().getAsInt();
 		this.nHoles = holesCords.size();
-		this.sumHeightDiff = getSumHeightDiff();
+		this.sumHeightDiff = Arrays.stream(colHeightsDiff).sum();
+		this.averageHeight = Arrays.stream(colHeights).sum()/width;
 		this.colTransition = getColTransition();
 		this.rowTransition = getRowTransition(); 
 		this.nErodedCells = nClearedLines * nBrickCleared;
 		this.holesDepth =  getHolesDepth();
 		this.nPatternDiversity = getNpatternDiversity();
+		this.gameOver = builder.gameOver;
+		this.oldFeatures = builder.oldFeatures;
+		if(oldFeatures != null){
+			this.pileHeightDelta = pileHeight - oldFeatures.pileHeight;
+			this.nHolesDelta = nHoles - oldFeatures.nHoles;
+			this.sumHeightDiffDelta = sumHeightDiff - oldFeatures.sumHeightDiff;
+			this.averageHeightDelta = averageHeight - oldFeatures.averageHeight;
+		}else{
+			this.pileHeightDelta = 0;
+			this.nHolesDelta = 0;
+			this.sumHeightDiffDelta = 0;
+			this.averageHeightDelta = 0;
+		}
+
 	}
 
 	int getCumWells() {
@@ -142,8 +162,7 @@ public class TetrisFeatures {
 	}
 
 	int getHolesDepth() {
-		//depth of a hole is the height of the first filled cell wrt to the hole above it.
-		// this method returns sum of depth of all holes.
+		//for each hole count num of rows above first filled cell, sum it over all holes.
 		int rslt = 0;
 		for (Pair<Integer, Integer> hole : holesCords) {
 			int r = hole.getFirst();
@@ -157,11 +176,12 @@ public class TetrisFeatures {
 		return rslt;
 	}
 
-	int getSumHeightDiff() {
-		int rslt = 0;
+	int[] getColDiff() {
+		int[] rslt = new int[colHeights.length-1];
 		int N = colHeights.length-1;
 		for (int i = 0; i < N; i++)
-			rslt += Math.abs(colHeights[i] - colHeights[i+1]);
+			rslt[i] = Math.abs(colHeights[i] - colHeights[i + 1]);
+
 		return rslt;
 	}
 
@@ -264,7 +284,7 @@ public class TetrisFeatures {
 		for (int i = 0; i < width ; i++) {
 			colHeights[i] = 0;
 		}
-		for (int r = height-1; r >=0; r--)
+		for (int r = height -1; r >=0; r--)
 			for (int c = 0; c < width; c++)
 				if (board[r][c] && colHeights[c] == 0)
 					colHeights[c] = r + 1;
@@ -280,13 +300,14 @@ public class TetrisFeatures {
 		return rslt;
 	}
 
+
 	public static class Builder {
 
 		//required parameters, raise error if not set
 		private int height; 
 		private int width;
-		private boolean gameOver; 
-		private int nClearedLines; 
+		private boolean gameOver;
+		private int nClearedLines;
 		private int nBrickCleared;
 		private double landingHeight;
 
@@ -294,6 +315,9 @@ public class TetrisFeatures {
 		private int[] colHeights = null; //a 
 		private Set<Pair<Integer, Integer>> holesCords = null; //b
 		private boolean[][] board = null; //c
+
+		//optional parameter for calculating change features
+		private TetrisFeatures oldFeatures = null;
 
 		public Builder(int height, int width, int nClearedLines, int nBrickCleared, double landingHeight,
 					   boolean gameOver) {
@@ -309,6 +333,8 @@ public class TetrisFeatures {
 			this.holesCords = val;
 			return this;
 		}
+
+		public Builder oldFeatures(TetrisFeatures val) { this.oldFeatures = val; return this;}
 
 		public Builder colHeights(int[] val) { this.colHeights = val; return this;}
 

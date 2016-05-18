@@ -11,4 +11,8 @@ public class TetrisAction {
         this.rot = rot;
     }
 
+    public String name(){
+        return col+"_"+rot;
+    }
+
 }

@@ -15,13 +15,13 @@ import java.util.Random;
 
 public class analyzeTetris {
 
-    static String path = "src/main/resources/tetris/rawGames/bcts_small/";
-    static String suffix = "Bcts";
-    static int numSamples = 10000;
+//    static String path = "src/main/resources/tetris/rawGames/bcts/";
+//    static String suffix = "Bcts";
+//    static int numSamples = 10000;
 
-//    static String path = "src/main/resources/tetris/rawGames/random/";
-//    static String suffix = "Random";
-//    static int numSamples = 200000;
+    static String path = "src/main/resources/tetris/rawGames/random/";
+    static String suffix = "Random";
+    static int numSamples = 200000;
 
     static String outpath = "src/main/resources/tetris/dominance/";
 

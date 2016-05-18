@@ -154,6 +154,23 @@ public class TetrisStateTest {
         }
     }
 
+    @Test
+    public void testFeatureValuesCopy() {
+        for (int i = 0; i < states.size() - 1; i++) {
+            Pair<TetrisState, TetrisAction> stateActionPair = states.get(i);
+            TetrisState state = stateActionPair.getFirst();
+            TetrisAction action = stateActionPair.getSecond();
+            state.nextState(action);
+            state.piece = states.get(i+1).getFirst().piece;
+            List<Double> valuesState = TetrisFeatureSet.make(state.features, "thierry");
+            List<Double> valuesStateCopy = TetrisFeatureSet.make(state.copy().features, "thierry");
+            for (int j = 0; j < valuesState.size(); j++) {
+                assertEquals(valuesState.get(j), valuesStateCopy.get(j));
+            }
+
+        }
+    }
+
     private void testFeature(int featureNumber) {
         for (int i = 0; i < states.size(); i++) {
             Pair<TetrisState, TetrisAction> stateActionPair = states.get(i);
@@ -171,12 +188,10 @@ public class TetrisStateTest {
             TetrisState state = stateActionPair.getFirst();
             TetrisAction action = stateActionPair.getSecond();
             state.nextState(action);
-            if (!state.features.gameOver) {
-                List<Double> valuesState = TetrisFeatureSet.make(state.features, "thierry");
-                List<Double> valuesStateFile = featureValues.get(i + 1);
-                System.out.println(state.getStringKey());
-                assertTrue("Error in feature " + featureNames.get(featureNumber) + ": expected: " + valuesStateFile.get(featureNumber) + ", found: " + valuesState.get(featureNumber) + "\n state: " + state.getStringKey(), Math.abs(valuesState.get(featureNumber) - valuesStateFile.get(featureNumber)) < epsilon);
-            }
+            List<Double> valuesState = TetrisFeatureSet.make(state.features, "thierry");
+            List<Double> valuesStateFile = featureValues.get(i + 1);
+            System.out.println(state.getStringKey());
+            assertTrue("Error in feature " + featureNames.get(featureNumber) + ": expected: " + valuesStateFile.get(featureNumber) + ", found: " + valuesState.get(featureNumber) + "\n state: " + state.getStringKey(), Math.abs(valuesState.get(featureNumber) - valuesStateFile.get(featureNumber)) < epsilon);
         }
     }
 }

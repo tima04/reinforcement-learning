@@ -9,7 +9,7 @@ import java.util.*;
 public class TetrisState {
 
     boolean[][] board;
-    public static int height = 16, width = 10, matHeight = height + 4;
+    public static final int height = 16, width = 10, matHeight = height + 4;
     Tetromino piece;
     public TetrisFeatures features;
     String stringKey;
@@ -32,10 +32,10 @@ public class TetrisState {
         piece = Tetromino.pieces.get(rand.nextInt(Tetromino.pieces.size()));
     }
 
-    TetrisState(boolean[][] board, TetrisFeatures features, Tetromino piece){
+    TetrisState(boolean[][] board, Tetromino piece, int clearedLines, int nBricksCleared, double landingHeight, boolean gameOver, TetrisFeatures oldTetrisFeatures){
         this.board = board;
-        this.features = features;
         this.piece = piece;
+        features = new TetrisFeatures.Builder(height, width, clearedLines, nBricksCleared, landingHeight, gameOver).oldFeatures(oldTetrisFeatures).board(board).build();
     }
 
     /**
@@ -56,7 +56,7 @@ public class TetrisState {
                 }
             }
         }
-        return new TetrisState(board, getTetrisFeatures(board), piece);
+        return new TetrisState(board, piece, 0, 0, 0, false, null);
     }
 
     public void nextState(TetrisAction a){
@@ -180,9 +180,6 @@ public class TetrisState {
     }
 
 
-    private static TetrisFeatures getTetrisFeatures(boolean[][] board) {
-        return new TetrisFeatures.Builder(height, width, 0, 0, 0, true).board(board).build();
-    }
 
     /**
      * It measures all the new feature values.
@@ -202,21 +199,27 @@ public class TetrisState {
         if(Compute.max(newColHeights) > height)
             gameOver = true;
 
+        //We truncate colheights
+        for (int i = 0; i < newColHeights.length; i++)
+            if(newColHeights[i] > height)
+                newColHeights[i] = height;
+
+
         Pair<List<Integer>, Integer> clearedRowsAndCells = clearedRows(col, rotatedPiece, newColHeights);
 
         if(!gameOver && clearedRowsAndCells.getFirst().size() > 0) {
             boolean[][] boardCopy = boardCopy();
             integratePieceIntoBoard(boardCopy, rotatedPiece, col, offset, features.colHeights);
             clearRows(boardCopy, clearedRowsAndCells);
-            return new TetrisFeatures.Builder(height, width, clearedRowsAndCells.getFirst().size(), clearedRowsAndCells.getSecond(), landingHeight, gameOver).board(boardCopy).build();
+            return new TetrisFeatures.Builder(height, width, clearedRowsAndCells.getFirst().size(), clearedRowsAndCells.getSecond(), landingHeight, gameOver).oldFeatures(features).board(boardCopy).build();
         }
 
-        return new TetrisFeatures.Builder(height, width, 0, 0, landingHeight, gameOver).colHeights(newColHeights).holesCords(newHoleCoordinates).build();
+        return new TetrisFeatures.Builder(height, width, 0, 0, landingHeight, gameOver).colHeights(newColHeights).holesCords(newHoleCoordinates).oldFeatures(features).build();
     }
 
     private boolean[][] boardCopy() {
-        boolean[][] boardCopy = new boolean[height][width];
-        for (int r = 0; r < height; r++) {
+        boolean[][] boardCopy = new boolean[matHeight][width];
+        for (int r = 0; r < matHeight; r++) {
             for (int c = 0; c < width; c++) {
                 boardCopy[r][c] = board[r][c];
             }
@@ -357,5 +360,40 @@ public class TetrisState {
         }
         stringKey = stringBuilder.toString();
         return stringKey;
+    }
+
+    public TetrisState copy() {
+        return new TetrisState(boardCopy(), piece.copy(), features.nClearedLines, features.nBrickCleared, features.landingHeight, features.gameOver, features.oldFeatures);
+    }
+
+    public void print() {
+        this.printBoard(board);
+    }
+
+    void printBoard(boolean[][] board) {
+        boolean[][] pieceMatrix = piece.getRotatedPiece(0);
+        int pnrow = pieceMatrix.length;
+        int pncol = pieceMatrix[0].length;
+        String rslt = "";
+
+        for (int i = pnrow - 1; i >= 0; i--) {
+            for (int j = 0; j < pncol; j++)
+                rslt += pieceMatrix[i][j] ? " 1 " : " 0 ";
+
+            rslt += "\n";
+        }
+
+
+        int nrow = board.length;
+        int ncol = board[0].length;
+        rslt += "\n";
+        for (int i = nrow-1; i >= 0; i--) {
+            for (int j = 0; j < ncol; j++)
+                rslt += board[i][j] ? " 1": " 0";
+            rslt += "\n";
+            if(i == height)
+                rslt += "\n";
+        }
+        System.out.println(rslt);
     }
 }
