@@ -28,8 +28,8 @@ public class LambdaPI {
 		String featureSet = "bertsekas";
 		int numIt = 30;
 		double gamma = 0.9;
-		double lambda = 0.6;
-		int sampleSize = 500000;
+		double lambda = 0.9;
+		int sampleSize = 100000;
 		setOutput("lpi_"+featureSet+"_"+sampleSize+"_"+lambda+"_"+arg[0]);
 		UtilAmpi.ActionType  actionType = UtilAmpi.ActionType.ANY;
 		if(arg[0].equals("dom"))
@@ -59,7 +59,8 @@ public class LambdaPI {
 	}
 
 	final static String paretoFeatureSet = "bcts";
-	final static double[] paretoWeights = new double[]{-13.08, -19.77, -9.22, -10.49, 6.60, -12.63, -24.04, -1.61};
+//	final static double[] paretoWeights = new double[]{-13.08, -19.77, -9.22, -10.49, 6.60, -12.63, -24.04, -1.61};
+	final static double[] paretoWeights = new double[]{-5, -6, -2, -3, 1, -4, -7, -1}; //It should have the same effect since the direction and order are the same.
 
 
 	int maxSim, sampleSize, numFeatures;
@@ -102,7 +103,7 @@ public class LambdaPI {
 		for (int i = 0; i < maxSim; i++) {
 			long t0 = System.currentTimeMillis();
 
-			List<Object> states = game.getSampleTrajectory(sampleSize, beta, featureSet, actionType); //sample trajectories
+			List<Object> states = game.getSampleTrajectory(sampleSize, beta, featureSet, actionType, paretoFeatureSet, paretoWeights); //sample trajectories
 			double td_sum = 0;
 			double[] ys = new double[numFeatures];
 			double[][] xs = new double[numFeatures][numFeatures];
@@ -124,7 +125,7 @@ public class LambdaPI {
 				// If the state before is the last state of its trajectory,
 //				 then the previous value is 0.
 
-				td_sum = calculateDt(state, stateEstimatedValue, stateBeforeEstimatedValue) + lambda * td_sum;
+				td_sum = calculateDt(state, stateEstimatedValue, stateBeforeEstimatedValue) + lambda * gamma * td_sum;
 
 				//if state is gameover, a new trajectory begins and we restart td_sum.
 				if(game.isGameover(state)) {

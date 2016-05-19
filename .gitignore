@@ -69,6 +69,7 @@ hs_err_pid*
 gradle*
 build
 **/.DS_Store
+classes/
 
 *build.gradle* ## Simon does not wants it.
 
@@ -77,3 +78,4 @@ GTAGS
 GPATH
 GRTAGS
 src/main/resources/
+.Rproj.user

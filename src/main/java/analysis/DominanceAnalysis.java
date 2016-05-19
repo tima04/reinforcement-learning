@@ -1,6 +1,7 @@
 package analysis;
 
 
+import analysis.util.BctsActions;
 import domains.tetris.*;
 import org.apache.commons.math3.util.Pair;
 import util.DistinctCounter;
@@ -29,6 +30,8 @@ public class DominanceAnalysis implements Analysis{
     public void executeAndWriteLineToReport(TetrisState stateBefore, TetrisAction action) {
         List<Pair<TetrisAction,TetrisFeatures>> actionFeatures = stateBefore.getActionsFeaturesList();
         actionFeatures = actionFeatures.stream().filter(p -> !p.getSecond().gameOver).collect(Collectors.toList()); //Filter out actions that lead to gameover.
+        List<TetrisAction> bctsActions = BctsActions.get(stateBefore);
+
         boolean agentOptionsAreDominant = false;
 
         double[][] objects = new double[actionFeatures.size()][weightVector.size()];
@@ -53,14 +56,17 @@ public class DominanceAnalysis implements Analysis{
         int paretoIdx = 0;
         for (int i = 0; i < objects.length; i++) {
             if (pareto[i]) {
-                if(actionFeatures.get(i).getFirst().equals(action))
-                    agentOptionsAreDominant = true;
+                for (TetrisAction bctsAction : bctsActions) {
+                    if(actionFeatures.get(i).getFirst().equals(bctsAction))
+                        agentOptionsAreDominant = true;
+                }
                 for (int j = 0; j < objects[0].length; j++) {
                     paretoObjects[paretoIdx][j] = objects[i][j];
                 }
                 paretoIdx++;
             }
         }
+        assert agentOptionsAreDominant;
         report.addLine(objects.length+","+ DistinctCounter.howManyDistinct(objects)+","+ numPareto+","+DistinctCounter.howManyDistinct(paretoObjects));
         System.out.println(objects.length+","+DistinctCounter.howManyDistinct(objects)+","+ numPareto+","+DistinctCounter.howManyDistinct(paretoObjects));
     }

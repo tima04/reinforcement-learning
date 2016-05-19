@@ -45,7 +45,7 @@ public class EvaluateLinearAgent {
                 int[] maxIndices = Compute.indicesOfMax(values);
                 int chosenAction = random.nextInt(maxIndices.length);
                 TetrisAction action = actionPareto.get(maxIndices[chosenAction]).getFirst();
-                state.nextState(action.col, action.rot);
+                state.nextState(action.col, action.rot, random);
                 score += state.features.nClearedLines;
             }
             totalScore = totalScore + score;

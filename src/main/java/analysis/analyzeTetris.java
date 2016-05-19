@@ -18,10 +18,17 @@ public class analyzeTetris {
 //    static String path = "src/main/resources/tetris/rawGames/bcts/";
 //    static String suffix = "Bcts";
 //    static int numSamples = 10000;
+////  Make sure board is 16 by 10
 
-    static String path = "src/main/resources/tetris/rawGames/random/";
-    static String suffix = "Random";
+//    static String path = "src/main/resources/tetris/rawGames/random/";
+//    static String suffix = "Random";
+//    static int numSamples = 200000;
+////  Make sure board is 16 by 10
+
+    static String path = "src/main/resources/tetris/rawGames/people/";
+    static String suffix = "AllPeople";
     static int numSamples = 200000;
+////Make sure board is 20 by 10
 
     static String outpath = "src/main/resources/tetris/dominance/";
 
@@ -72,6 +79,9 @@ public class analyzeTetris {
 
     static List<String> readLinesAndSample(File file) throws IOException {
         List<String> lines = Files.readAllLines(Paths.get(file.getPath()));
+        if(lines.size() <= numSamples)
+            return lines;
+
         return ReservoirSample.sample(lines, numSamples, random);
     }
 
@@ -79,8 +89,11 @@ public class analyzeTetris {
     static Pair<TetrisState, TetrisAction> parseLine(String line){
         String[] splittedLine = line.split(",");
         TetrisState state = TetrisState.parseState(splittedLine[0]);
-        String[] splittedAction = splittedLine[1].split("_");
-        TetrisAction action = new TetrisAction(Integer.parseInt(splittedAction[0]), Integer.parseInt(splittedAction[1]));
+        TetrisAction action = new TetrisAction(0, 0);
+        if(splittedLine[1].split("_").length == 2) { //SECOND PART OF LINE IS ACTION
+            String[] splittedAction = splittedLine[1].split("_");
+            action = new TetrisAction(Integer.parseInt(splittedAction[0]), Integer.parseInt(splittedAction[1]));
+        }
         return new Pair(state, action);
     }
 

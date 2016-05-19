@@ -39,11 +39,11 @@ public class TetrisFeatureSet {
         }else if(featureSet.equals("lagoudakisthierry")){
             values.add((double)tetrisFeatures.nHoles);
             values.add((double)tetrisFeatures.pileHeight);
+            values.add(tetrisFeatures.averageHeight);
             values.add((double)tetrisFeatures.sumHeightDiff);
             values.add((double)tetrisFeatures.nClearedLines);
             values.add((double)tetrisFeatures.nHolesDelta);
             values.add((double)tetrisFeatures.pileHeightDelta);
-            values.add(tetrisFeatures.averageHeight);
             values.add(tetrisFeatures.averageHeightDelta);
             values.add((double)tetrisFeatures.sumHeightDiffDelta);
             values.add((double)tetrisFeatures.colTransition);
@@ -92,11 +92,11 @@ public class TetrisFeatureSet {
         }else if(featureSet.equals("lagoudakisthierry")){
             names.add("nHoles");
             names.add("pileHeight");
+            names.add("averageHeight");
             names.add("sumHeightDiff");
             names.add("nClearedLines");
             names.add("nHolesDelta");
             names.add("pileHeightDelta");
-            names.add("averageHeight");
             names.add("averageHeightDelta");
             names.add("sumHeightDiffDelta");
             names.add("colTransition");

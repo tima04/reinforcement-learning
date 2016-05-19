@@ -8,7 +8,10 @@ import util.DistinctCounter;
 import util.UtilAmpi;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class NoncompensatorinessAnalysis implements Analysis{
 
@@ -41,7 +44,11 @@ public class NoncompensatorinessAnalysis implements Analysis{
         List<Pair<TetrisAction, TetrisFeatures>> actionFeatures = stateBefore.getActionsFeaturesList();
         double[][] objects = new double[actionFeatures.size()][weightArray.length];
         List<TetrisAction> bctsActions = bctsAction(stateBefore, weightArray);
-        int[] featureOrder = Compute.orderedIndices(weightArray);
+        double[] unsignedWeightArray = new double[weightArray.length];
+        for (int i = 0; i < unsignedWeightArray.length; i++)
+            unsignedWeightArray[i] = Math.abs(weightArray[i]);
+
+        int[] featureOrder = Compute.orderedIndices(unsignedWeightArray);
         //fill objects
         for (int i = 0; i < actionFeatures.size(); i++) {
             List<Double> valuesList = TetrisFeatureSet.make(actionFeatures.get(i).getSecond(), "bcts");

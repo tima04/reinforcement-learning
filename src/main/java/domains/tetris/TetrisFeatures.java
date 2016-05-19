@@ -75,7 +75,7 @@ public class TetrisFeatures {
 		this.pileHeight = Arrays.stream(colHeights).max().getAsInt();
 		this.nHoles = holesCords.size();
 		this.sumHeightDiff = Arrays.stream(colHeightsDiff).sum();
-		this.averageHeight = Arrays.stream(colHeights).sum()/width;
+		this.averageHeight = (double)Arrays.stream(colHeights).sum()/(double)width;
 		this.colTransition = getColTransition();
 		this.rowTransition = getRowTransition(); 
 		this.nErodedCells = nClearedLines * nBrickCleared;
@@ -204,15 +204,14 @@ public class TetrisFeatures {
 				!isOpen(hole))
 				rslt += 2;
 
-			if(isBelowFloatingCell(hole))
+			if((!holesCords.contains(new Pair(hole.getFirst(), hole.getSecond()+1))) &&
+					isBelowFloatingCell(hole))
 				rslt -= 2;
 		}
 
 
 		//each delta diff in consecutive colHeights will contribute delta.
 		rslt += sumHeightDiff;
-		// for (int i = 0; i < N; i++)
-		// 	rslt += Math.abs(colHeights[i] - colHeights[i+1]);
 
 		//take contribution by walls
 		rslt += 2*this.height - colHeights[0] - colHeights[colHeights.length - 1];
@@ -227,10 +226,16 @@ public class TetrisFeatures {
 		int r = hole.getFirst();
 		int c = hole.getSecond();
 
-		if (c == 0 || c == width-1) //holes at boundaries can not be below floating pieces.
+		//get columns of left and right most sibling.
+		int lc = c; //column of left-most sibling.
+		int rc = c; //column of right-most sibling.
+		for(; holesCords.contains(new Pair<Integer, Integer>(r, lc-1));lc--);
+		for(; holesCords.contains(new Pair<Integer, Integer>(r, rc+1));rc++);
+
+		if (c == 0 || c == width-1 || lc == 0 || rc == width-1) //holes at boundaries can not be below floating pieces.
 			return false;
 
-		if(colHeights[c-1] <= r && colHeights[c+1] <= r)
+		if(colHeights[lc -1] -1 < r && colHeights[rc +1] -1 < r)
 			return true;
 
 		return false;
@@ -280,11 +285,11 @@ public class TetrisFeatures {
 
 	int[] getColHeights(boolean[][] board) {
 		int[] colHeights = new int[width];
-		//initialize to -1
+		//initialize to 0
 		for (int i = 0; i < width ; i++) {
 			colHeights[i] = 0;
 		}
-		for (int r = height -1; r >=0; r--)
+		for (int r = height - 1; r >=0; r--) //column heights have a max value of height.
 			for (int c = 0; c < width; c++)
 				if (board[r][c] && colHeights[c] == 0)
 					colHeights[c] = r + 1;
@@ -295,7 +300,7 @@ public class TetrisFeatures {
 		Set<Pair<Integer, Integer>> rslt = new HashSet<>();
 		for (int col = 0; col < width; col++)	
 			for (int row = 0; row < colHeights[col]; row++)
-				if (!board[row][col])
+				if (!board[row][col] && row < height)
 					rslt.add(new Pair<Integer, Integer> (row, col));
 		return rslt;
 	}

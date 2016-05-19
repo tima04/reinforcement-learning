@@ -20,12 +20,6 @@ public class playTetris {
     weights.add(-24.04);
     weights.add(-1.61);
 
-        //GOOD BERTSEKAS WEIGHTS
-//    weights = Arrays.asList(40.914491962098424, -12.386027577874849, -0.25583141726059533, 1.3742221011665643, -0.6522445616294172, 0.1585344309818091, 0.0890114208183651, -0.4191123766016942, 0.2901089535745248, -0.04948048093202312, 0.4255545588419517, -1.6234399017909857, 2.38811170490406, -1.6671647196065562, -1.306600082158671, -1.7454591408042213, -2.3725312042045488, -2.047968378262172, -1.7759209496410264, -2.040040418547827, -1.7767892580624305, -2.8295926639570084);
-
-        EvaluateLinearAgent.gamesTetris(10, new Random(), "bertsekas", weights, UtilAmpi.ActionType.ANY, "none", new double[]{}, true);
-
-
         Random random = new Random(1);
 
         boolean limitGames = true; //If true the agent plays the number of games.
@@ -53,7 +47,7 @@ public class playTetris {
                 actions = actions.stream().filter(p -> !p.getSecond().gameOver).collect(Collectors.toList()); //Filter out actions that lead to gameover.
 
                 if(actions.size() == 0) { // no actions available
-                    state.nextState(0, 0);
+                    state.nextState(0, 0, random);
                     break;
                 }
 
@@ -63,7 +57,7 @@ public class playTetris {
     //                detailedReport.addLine(state.getString()+","+action.col+"_"+action.rot);
     //                detailedReport.generate();
 
-                state.nextState(action.col, action.rot);
+                state.nextState(action.col, action.rot, random);
 
                 totalSteps++;
 

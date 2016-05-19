@@ -9,7 +9,7 @@ import java.util.*;
 public class TetrisState {
 
     boolean[][] board;
-    public static final int height = 16, width = 10, matHeight = height + 4;
+    public static final int height = 20, width = 10, matHeight = height + 4;
     Tetromino piece;
     public TetrisFeatures features;
     String stringKey;
@@ -51,7 +51,7 @@ public class TetrisState {
             String row = rows[i];
             String[] cols = row.split(":");
             for (String col : cols) {
-                if (!col.equals("")) {
+                if (!col.equals("") && i <= height) {
                     board[i-1][Integer.parseInt(col)] = true;
                 }
             }
@@ -59,21 +59,15 @@ public class TetrisState {
         return new TetrisState(board, piece, 0, 0, 0, false, null);
     }
 
-    public void nextState(TetrisAction a){
-        nextState(a.col, a.rot);
-    }
-
-    public void nextState(int col, int rot){
-        nextState(col, rot, null);
-    }
-
     public List<Pair<TetrisAction, TetrisFeatures>> getActionsFeaturesList(){
         List<Pair<TetrisAction, TetrisFeatures>> rslt = new ArrayList<>();
-        for (int rot = 0; rot < piece.getNumRotations(); rot++) {
-            for (int col = 0; col <= width - piece.getRotatedPiece(rot)[0].length; col++) {
-                int offset = getVerticalOffset(col, rot);
-                TetrisFeatures newFeatures = getTetrisFeatures(col, offset, piece.getRotatedPieceHeights(rot), piece.getRotatedPieceHoles(rot), piece.getRotatedPiece(rot));
-                rslt.add(new Pair(new TetrisAction(col, rot), newFeatures));
+        if(!features.gameOver) {
+            for (int rot = 0; rot < piece.getNumRotations(); rot++) {
+                for (int col = 0; col <= width - piece.getRotatedPiece(rot)[0].length; col++) {
+                    int offset = getVerticalOffset(col, rot);
+                    TetrisFeatures newFeatures = getTetrisFeatures(col, offset, piece.getRotatedPieceHeights(rot), piece.getRotatedPieceHoles(rot), piece.getRotatedPiece(rot));
+                    rslt.add(new Pair(new TetrisAction(col, rot), newFeatures));
+                }
             }
         }
         return rslt;
@@ -93,14 +87,15 @@ public class TetrisState {
         int[] pieceHoles = piece.getRotatedPieceHoles(rot);
 
         int[] oldColHeights = features.colHeights;
-        int[] newColHeightsBeforeClearing = getNewColHeights(col, offset, pieceHeights);
+        int[] newColHeightsBeforeClearing = getNewColHeights(col, offset, pieceHeights, pieceHoles);
 
         features = getTetrisFeatures(col, offset, pieceHeights, pieceHoles, pieceMatrix);
 
         //make piece part of board:
         Pair<List<Integer>, Integer> clearedRowsAndCells = clearedRows(col, pieceMatrix, newColHeightsBeforeClearing);
-        integratePieceIntoBoard(board, pieceMatrix, col, offset, oldColHeights);
-        clearRows(board, clearedRowsAndCells);
+        integratePieceIntoBoard(this.board, pieceMatrix, col, offset, oldColHeights);
+        if(!features.gameOver)
+            clearRows(this.board, clearedRowsAndCells);
 
         if(random == null)
             random = new Random();
@@ -191,7 +186,7 @@ public class TetrisState {
      * @return
      */
     private TetrisFeatures getTetrisFeatures(int col, int offset, int[] pieceHeights, int[] pieceHoles, boolean[][] rotatedPiece){
-        int[] newColHeights = getNewColHeights(col, offset, pieceHeights);
+        int[] newColHeights = getNewColHeights(col, offset, pieceHeights, pieceHoles);
         Set<Pair<Integer, Integer>> newHoleCoordinates = getHolesCoordinates(col, pieceHoles, newColHeights, pieceHeights, features.holesCords);
         double landingHeight = landingHeight(col, rotatedPiece, newColHeights);
         boolean gameOver = false;
@@ -251,7 +246,7 @@ public class TetrisState {
      * @param pieceHeights
      * @return
      */
-    private int[] getNewColHeights(int col, int elevation, int[] pieceHeights) {
+    private int[] getNewColHeights(int col, int elevation, int[] pieceHeights, int[] pieceHoles) {
         int[] newColHeights = features.colHeights.clone();
         for (int i = col; i < col + pieceHeights.length; i++) {
             newColHeights[i] = elevation + features.colHeights[col] + pieceHeights[i - col];
@@ -275,7 +270,8 @@ public class TetrisState {
             int newHoleDelta = newHeights[i] - features.colHeights[i] - pieceHeights[i - col] + pieceHoles[i - col];
             if(newHoleDelta > 0)
                 for (int row = features.colHeights[i]; row < (newHeights[i] - pieceHeights[i - col]+ pieceHoles[i - col]); row++)
-                    newHolesIndex.add(new Pair(row , i));
+                    if(row < height)
+                        newHolesIndex.add(new Pair(row , i));
         }
         return newHolesIndex;
     }

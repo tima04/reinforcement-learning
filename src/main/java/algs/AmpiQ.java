@@ -1,6 +1,7 @@
 package algs;
 
 import domains.tetris.EvaluateLinearAgent;
+import domains.tetris.TetrisState;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.linear.SingularMatrixException;
 import org.apache.commons.math3.util.Pair;
@@ -29,8 +30,8 @@ public class AmpiQ {
 
 		int numIt = 30;
 		double gamma = 0.9;
-		int sampleSize = 50000;
-		int nrollout = 10;
+		int sampleSize = 20000;
+		int nrollout = 15;
 		setOutput("ampiq_"+featureSet+"_"+sampleSize+"_"+arg[0]);
 		UtilAmpi.ActionType  actionType = UtilAmpi.ActionType.ANY;
 		if(arg[0].equals("dom"))
@@ -60,7 +61,8 @@ public class AmpiQ {
 	}
 
 	final String paretoFeatureSet = "bcts";
-	final double[] paretoWeights = new double[]{-13.08, -19.77, -9.22, -10.49, 6.60, -12.63, -24.04, -1.61};
+//	final double[] paretoWeights = new double[]{-13.08, -19.77, -9.22, -10.49, 6.60, -12.63, -24.04, -1.61};
+	final static double[] paretoWeights = new double[]{-5, -6, -2, -3, 1, -4, -7, -1}; //It should have the same effect since the direction and order are the same.
 
 
 	int maxSim, rolloutSetSize, nRollout, M; // M is from equation 4
@@ -110,26 +112,24 @@ public class AmpiQ {
 		for (int k = 0; k <= this.maxSim; k++) {
 			long t0 = System.currentTimeMillis();
 
-			this.rolloutSet = game.getRandomStates(rolloutSetSize, beta, featureSet, 1, rolloutActionType);
+			this.rolloutSet = RolloutUtil.getRolloutSetTetris(game, rolloutSetSize, beta, featureSet, rolloutActionType, paretoFeatureSet, paretoWeights);
 
 			double[] ys = new double[this.rolloutSet.size()];
 			double[][] xs = new double[this.rolloutSet.size()][this.numFeatures];
 
 			for (int i = 0; i < this.rolloutSet.size(); i++) {
 				Object state = this.rolloutSet.get(i);
-//				List<String> actions =  game.getActions(state, this.rolloutActionType);
-				String action = "0_0";
-//				if(!actions.isEmpty())
-//					 action = UtilAmpi.randomChoice(actions);
+				List<String> actions =  game.getActionsIncludingGameover(state, this.rolloutActionType, paretoFeatureSet, paretoWeights);//These actions include those that lead immediatly to gameover
+				String action = UtilAmpi.randomChoice(actions);
 
-				Pair<String,Double> actionPair = RolloutUtil.getBestActionTetris(state, beta, game, featureSet, rolloutActionType, random);
-				action = actionPair.getFirst();
-				if(action.equals(""))
-					action = "0_0";
+//				Pair<String,Double> actionPair = RolloutUtil.getBestActionTetris(state, beta, game, featureSet, rolloutActionType, random);
+//				action = actionPair.getFirst();
+//				if(action.equals(""))
+//					action = "0_0";
 
 				List<Double> x = this.game.getFeatureValues(featureSet, state, action);
 				Pair<Object, String> sa = new Pair<>(state, action);
-				double y = RolloutUtil.doRolloutTetris(sa, this.nRollout, game, beta, beta, gamma, featureSet, featureSet, rolloutActionType, random);
+				double y = RolloutUtil.doRolloutTetris(sa, this.nRollout, game, beta, beta, gamma, featureSet, featureSet, rolloutActionType, random, paretoFeatureSet, paretoWeights);
 				xs[i] = ArrayUtils.toPrimitive(x.toArray(new Double[x.size()]));
 				ys[i] = y;
 			}

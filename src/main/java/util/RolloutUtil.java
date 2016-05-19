@@ -11,10 +11,15 @@ import java.util.Random;
 
 public class RolloutUtil {
 
-
+    public static List<Object> getRolloutSetTetris(Game game, int n, List<Double> beta, String featureSet, UtilAmpi.ActionType actionType, String paretoFeatureSet, double[] paretoWeights) {
+        int k = 2;
+        List<Object> rslt = game.getRandomStates(k*n, beta, featureSet, 5, actionType, paretoFeatureSet, paretoWeights);
+        Collections.shuffle(rslt);
+        return rslt.subList(0, n);
+    }
 
     //Used when the rollout chooses actions according to classification betas and the last value comes from regression betas.
-    public static double doRolloutTetris(Pair<Object, String> stateAction, int n, Game game, List<Double> betaReg, List<Double> betaCl, double gamma, String featureSetReg, String featureSetCl, UtilAmpi.ActionType rolloutActionType, Random random) {
+    public static double doRolloutTetris(Pair<Object, String> stateAction, int n, Game game, List<Double> betaReg, List<Double> betaCl, double gamma, String featureSetReg, String featureSetCl, UtilAmpi.ActionType rolloutActionType, Random random, String paretoFeatureSet, double[] paretoWeights) {
         assert n >= 0;
         Object s = stateAction.getFirst();
         String a = stateAction.getSecond();
@@ -24,9 +29,9 @@ public class RolloutUtil {
         Object newState = pair.getFirst();
         double reward = pair.getSecond();
 
-        Pair<String, Double> bestActionValuePair = getBestActionTetris(newState, betaCl, game, featureSetCl, rolloutActionType, random);
+        Pair<String, Double> bestActionValuePair = getBestActionTetris(newState, betaCl, game, featureSetCl, rolloutActionType, random, paretoFeatureSet, paretoWeights);
 
-        if(bestActionValuePair.getFirst() == "")//All possible actions lead to gameover.
+        if(bestActionValuePair.getFirst().equals("") || game.isGameover(newState))//All possible actions lead to gameover.
             return reward;
 
         Pair<Object, String> newStateAction = new Pair<>(newState, bestActionValuePair.getFirst());
@@ -35,13 +40,13 @@ public class RolloutUtil {
             return reward + gamma * getValue(newStateAction, betaReg, game, featureSetReg);;
 
         //Rollout continues:
-        return reward + gamma * doRolloutTetris(newStateAction, n-1, game, betaReg, betaCl, gamma, featureSetReg, featureSetCl, rolloutActionType, random) ;
+        return reward + gamma * doRolloutTetris(newStateAction, n-1, game, betaReg, betaCl, gamma, featureSetReg, featureSetCl, rolloutActionType, random, paretoFeatureSet, paretoWeights) ;
     }
 
-    public static Pair<String,Double> getBestActionTetris(Object state, List<Double> beta, Game game, String featureSet, UtilAmpi.ActionType actionType, Random random) {
+    public static Pair<String,Double> getBestActionTetris(Object state, List<Double> beta, Game game, String featureSet, UtilAmpi.ActionType actionType, Random random, String paretoFeatureSet, double[] paretoWeights) {
         String bestAction = "";
         double bestValue;
-        List<Pair<String, List<Double>>> stateActionFeatureValues = game.getStateActionFeatureValues(featureSet, state, actionType);
+        List<Pair<String, List<Double>>> stateActionFeatureValues = game.getStateActionFeatureValues(featureSet, state, actionType, paretoFeatureSet, paretoWeights);
         double[] value = new double[stateActionFeatureValues.size()];
         for (int i = 0; i < stateActionFeatureValues.size(); i++) {
             value[i] = UtilAmpi.dotproduct(beta, stateActionFeatureValues.get(i).getSecond());//qStateAction(state, action);
