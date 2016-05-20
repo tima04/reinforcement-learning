@@ -148,7 +148,7 @@ public class TetrisStateTest {
             Pair<TetrisState, TetrisAction> stateActionPair = states.get(i);
             TetrisState state = stateActionPair.getFirst();
             TetrisAction action = stateActionPair.getSecond();
-            state.nextState(action);
+            state.nextState(action.col, action.rot, null);
             state.piece = states.get(i+1).getFirst().piece;
             if (!state.features.gameOver) {
                 System.out.println(state.getStringKey());
@@ -175,7 +175,7 @@ public class TetrisStateTest {
             Pair<TetrisState, TetrisAction> stateActionPair = states.get(i);
             TetrisState state = stateActionPair.getFirst();
             TetrisAction action = stateActionPair.getSecond();
-            state.nextState(action);
+            state.nextState(action.col, action.rot, null);
             if(!state.features.gameOver) {
                 List<Double> valuesState = TetrisFeatureSet.make(state.features, featureSet);
                 List<Double> valuesStateFile = featureValues.get(i + 1);

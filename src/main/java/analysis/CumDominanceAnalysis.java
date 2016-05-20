@@ -23,7 +23,7 @@ public class CumDominanceAnalysis implements Analysis{
         this.weightArray = new double[weightVector.size()];
         for (int i = 0; i < weightArray.length; i++)
             weightArray[i] = weightVector.get(i);
-        report.addLine("placements,distinct,pareto,pareto_distinct");
+        report.addLine("placements,distinct,pareto,pareto_distinct,intercept");
     }
 
     @Override

@@ -25,9 +25,19 @@ public class analyzeTetris {
 //    static int numSamples = 200000;
 ////  Make sure board is 16 by 10
 
-    static String path = "src/main/resources/tetris/rawGames/people/";
-    static String suffix = "AllPeople";
+//        static String path = "src/main/resources/tetris/rawGames/dom/";
+//    static String suffix = "Dom";
+//    static int numSamples = 200000;
+////  Make sure board is 16 by 10
+
+        static String path = "src/main/resources/tetris/rawGames/cum/";
+    static String suffix = "Cumdom";
     static int numSamples = 200000;
+////  Make sure board is 16 by 10
+
+//    static String path = "src/main/resources/tetris/rawGames/people/";
+//    static String suffix = "AllPeople";
+//    static int numSamples = 200000;
 ////Make sure board is 20 by 10
 
     static String outpath = "src/main/resources/tetris/dominance/";

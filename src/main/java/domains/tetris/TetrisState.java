@@ -9,7 +9,7 @@ import java.util.*;
 public class TetrisState {
 
     boolean[][] board;
-    public static final int height = 20, width = 10, matHeight = height + 4;
+    public static final int height = 16, width = 10, matHeight = height + 4;
     Tetromino piece;
     public TetrisFeatures features;
     String stringKey;
@@ -58,6 +58,7 @@ public class TetrisState {
         }
         return new TetrisState(board, piece, 0, 0, 0, false, null);
     }
+
 
     public List<Pair<TetrisAction, TetrisFeatures>> getActionsFeaturesList(){
         List<Pair<TetrisAction, TetrisFeatures>> rslt = new ArrayList<>();

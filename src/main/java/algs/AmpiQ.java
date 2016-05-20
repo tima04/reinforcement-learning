@@ -52,8 +52,8 @@ public class AmpiQ {
 		//file = file + System.currentTimeMillis();
 		try {
 			System.out.println(fileName);
-//			System.setOut(new PrintStream(new File("src/main/resources/tetris/scores/ampiq/"+fileName)));
-			System.setOut(new PrintStream(new File("scores/ampiq/"+fileName)));
+			System.setOut(new PrintStream(new File("src/main/resources/tetris/scores/ampiq/"+fileName)));
+//			System.setOut(new PrintStream(new File("scores/ampiq/"+fileName)));
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -121,11 +121,6 @@ public class AmpiQ {
 				Object state = this.rolloutSet.get(i);
 				List<String> actions =  game.getActionsIncludingGameover(state, this.rolloutActionType, paretoFeatureSet, paretoWeights);//These actions include those that lead immediatly to gameover
 				String action = UtilAmpi.randomChoice(actions);
-
-//				Pair<String,Double> actionPair = RolloutUtil.getBestActionTetris(state, beta, game, featureSet, rolloutActionType, random);
-//				action = actionPair.getFirst();
-//				if(action.equals(""))
-//					action = "0_0";
 
 				List<Double> x = this.game.getFeatureValues(featureSet, state, action);
 				Pair<Object, String> sa = new Pair<>(state, action);
