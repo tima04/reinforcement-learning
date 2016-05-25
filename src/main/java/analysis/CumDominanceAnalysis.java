@@ -67,8 +67,10 @@ public class CumDominanceAnalysis implements Analysis{
             }
         }
         assert agentOptionsAreDominant;
-        report.addLine(objects.length+","+ DistinctCounter.howManyDistinct(objects)+","+ numPareto+","+DistinctCounter.howManyDistinct(paretoObjects)+","+agentOptionsAreDominant);
-        System.out.println(objects.length+","+DistinctCounter.howManyDistinct(objects)+","+ numPareto+","+DistinctCounter.howManyDistinct(paretoObjects)+","+agentOptionsAreDominant);
+        if(numPareto > 0) {
+            report.addLine(objects.length + "," + DistinctCounter.howManyDistinct(objects) + "," + numPareto + "," + DistinctCounter.howManyDistinct(paretoObjects) + "," + agentOptionsAreDominant);
+            System.out.println(objects.length + "," + DistinctCounter.howManyDistinct(objects) + "," + numPareto + "," + DistinctCounter.howManyDistinct(paretoObjects) + "," + agentOptionsAreDominant);
+        }
     }
 
     @Override

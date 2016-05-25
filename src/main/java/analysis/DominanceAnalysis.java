@@ -23,7 +23,7 @@ public class DominanceAnalysis implements Analysis{
         this.weightArray = new double[weightVector.size()];
         for (int i = 0; i < weightArray.length; i++)
                 weightArray[i] = weightVector.get(i);
-        report.addLine("placements,distinct,pareto,pareto_distinct,intercept");
+        report.addLine("placements,distinct,pareto,pareto_distinct");
     }
 
     @Override
@@ -67,8 +67,10 @@ public class DominanceAnalysis implements Analysis{
             }
         }
         assert agentOptionsAreDominant;
-        report.addLine(objects.length+","+ DistinctCounter.howManyDistinct(objects)+","+ numPareto+","+DistinctCounter.howManyDistinct(paretoObjects));
-        System.out.println(objects.length+","+DistinctCounter.howManyDistinct(objects)+","+ numPareto+","+DistinctCounter.howManyDistinct(paretoObjects));
+        if(numPareto > 0) { //When numpareto is 0 the state is already gameover.
+            report.addLine(objects.length + "," + DistinctCounter.howManyDistinct(objects) + "," + numPareto + "," + DistinctCounter.howManyDistinct(paretoObjects));
+            System.out.println(objects.length + "," + DistinctCounter.howManyDistinct(objects) + "," + numPareto + "," + DistinctCounter.howManyDistinct(paretoObjects));
+        }
     }
 
     @Override
