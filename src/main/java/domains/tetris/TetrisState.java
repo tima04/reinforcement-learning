@@ -81,7 +81,7 @@ public class TetrisState {
      * @param rot
      * @param random
      */
-    public void nextState(int col, int rot, Random random) {
+    public void nextState(int col, int rot, Random random, Tetromino tetromino) {
         int offset = getVerticalOffset(col, rot);
         boolean[][] pieceMatrix = piece.getRotatedPiece(rot);
         int[] pieceHeights = piece.getRotatedPieceHeights(rot);
@@ -100,7 +100,25 @@ public class TetrisState {
 
         if(random == null)
             random = new Random();
-        piece = Tetromino.pieces.get(random.nextInt(Tetromino.pieces.size()));
+
+        if(tetromino != null)
+            piece = tetromino;
+        else
+            piece = Tetromino.pieces.get(random.nextInt(Tetromino.pieces.size()));
+    }
+
+    public void nextState(int col, int rot, Random random){
+        nextState(col, rot, random, null);
+    }
+
+    public List<TetrisState> nextStates(int col, int rot) {
+        List<TetrisState> nextStates = new ArrayList<>();
+        for (Tetromino tetromino : Tetromino.pieces) {
+            TetrisState base = this.copy();
+            base.nextState(col, rot, null, tetromino);
+            nextStates.add(base);
+        }
+        return nextStates;
     }
 
     private void integratePieceIntoBoard(boolean[][] board, boolean[][] pieceMatrix, int col, int offset, int[] colheights) {
@@ -393,4 +411,6 @@ public class TetrisState {
         }
         System.out.println(rslt);
     }
+
+
 }
