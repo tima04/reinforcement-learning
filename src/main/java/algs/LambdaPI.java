@@ -37,7 +37,8 @@ public class LambdaPI {
 		else if (arg[0].equals("cum"))
 			actionType = UtilAmpi.ActionType.CUMDOM;
 
-		LambdaPI lambdaPI = new LambdaPI(new Game(1), "bertsekas", numIt, gamma, lambda, initialWeights, sampleSize, actionType);
+		Random random = new Random();
+		LambdaPI lambdaPI = new LambdaPI(new Game(random), "bertsekas", numIt, gamma, lambda, initialWeights, sampleSize, actionType, random);
 		lambdaPI.iterate();
 	}
 
@@ -74,7 +75,7 @@ public class LambdaPI {
 
 	public LambdaPI(Game game, String featureSet, int maxSim,
 					double gamma, double lambda, List<Double> beta, int sampleSize,
-					UtilAmpi.ActionType actionType) {
+					UtilAmpi.ActionType actionType, Random random) {
 
 		this.game = game;
 		this.maxSim = maxSim;
@@ -83,7 +84,7 @@ public class LambdaPI {
 		this.actionType = actionType;
 
 		this.lambda = lambda;
-		this.random = new Random();
+		this.random = random;
 		this.sampleSize= sampleSize;
 		this.featureSet = featureSet;
 		this.numFeatures = game.getFeatureNames(featureSet).size();

@@ -11,10 +11,10 @@ import java.util.Random;
 
 public class RolloutUtil {
 
-    public static List<Object> getRolloutSetTetris(Game game, int n, List<Double> beta, String featureSet, UtilAmpi.ActionType actionType, String paretoFeatureSet, double[] paretoWeights) {
+    public static List<Object> getRolloutSetTetris(Game game, int n, List<Double> beta, String featureSet, UtilAmpi.ActionType actionType, String paretoFeatureSet, double[] paretoWeights, Random random) {
         int k = 2;
         List<Object> rslt = game.getRandomStates(k*n, beta, featureSet, 5, actionType, paretoFeatureSet, paretoWeights);
-        Collections.shuffle(rslt);
+        Collections.shuffle(rslt, random);
         return rslt.subList(0, n);
     }
 

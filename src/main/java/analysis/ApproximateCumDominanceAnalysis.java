@@ -10,11 +10,18 @@ import util.LinearDecisionRule;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CumDominanceAnalysis implements Analysis{
+public class ApproximateCumDominanceAnalysis implements Analysis{
 
     GeneralReport report;
     List<Double> weightVector;
     double[] weightArray;
+    int betterIn;
+    int worseIn;
+
+    ApproximateCumDominanceAnalysis(int betterIn, int worseIn){
+        this.betterIn = betterIn;
+        this.worseIn = worseIn;
+    }
 
     @Override
     public void startReport(String reportPath) {
@@ -22,8 +29,8 @@ public class CumDominanceAnalysis implements Analysis{
         this.weightVector = TetrisWeightVector.make("bcts");
         this.weightArray = new double[weightVector.size()];
         for (int i = 0; i < weightArray.length; i++)
-            weightArray[i] = weightVector.get(i);
-        report.addLine("placements,distinct,pareto,pareto_distinct,intercept");
+                weightArray[i] = weightVector.get(i);
+        report.addLine("placements,distinct,pareto,pareto_distinct,action_within_pareto,action_ideal");
     }
 
     @Override
@@ -32,7 +39,9 @@ public class CumDominanceAnalysis implements Analysis{
         actionFeatures = actionFeatures.stream().filter(p -> !p.getSecond().gameOver).collect(Collectors.toList()); //Filter out actions that lead to gameover.
         List<TetrisAction> bctsActions = BctsActions.get(stateBefore);
 
-        int agentOptionsAreDominant = 0;
+        boolean agentOptionsAreDominant = false;
+        int actionBetweenPareto = 0;
+        int actionIdeal = 0;
 
         double[][] objects = new double[actionFeatures.size()][weightVector.size()];
 
@@ -44,7 +53,7 @@ public class CumDominanceAnalysis implements Analysis{
             }
         }
         //count pareto
-        boolean[] pareto = LinearDecisionRule.paretoCumDominanceSet(weightArray, objects);
+        boolean[] pareto = LinearDecisionRule.paretoCumDominanceApprSet(weightArray, objects, betterIn, worseIn);
         int numPareto = 0;
         for (int i = 0; i < pareto.length; i++)
             if (pareto[i])
@@ -58,7 +67,10 @@ public class CumDominanceAnalysis implements Analysis{
             if (pareto[i]) {
                 for (TetrisAction bctsAction : bctsActions) {
                     if(actionFeatures.get(i).getFirst().equals(bctsAction))
-                        agentOptionsAreDominant = 1;
+                        agentOptionsAreDominant = true;
+                }
+                if(actionFeatures.get(i).getFirst().equals(action)){
+                    actionBetweenPareto = 1;
                 }
                 for (int j = 0; j < objects[0].length; j++) {
                     paretoObjects[paretoIdx][j] = objects[i][j];
@@ -66,10 +78,15 @@ public class CumDominanceAnalysis implements Analysis{
                 paretoIdx++;
             }
         }
-        assert agentOptionsAreDominant == 1;
-        if(numPareto > 0) {
-            report.addLine(objects.length + "," + DistinctCounter.howManyDistinct(objects) + "," + numPareto + "," + DistinctCounter.howManyDistinct(paretoObjects) + "," + agentOptionsAreDominant);
-            System.out.println(objects.length + "," + DistinctCounter.howManyDistinct(objects) + "," + numPareto + "," + DistinctCounter.howManyDistinct(paretoObjects) + "," + agentOptionsAreDominant);
+
+        for (TetrisAction bctsAction : bctsActions) {
+            if(action.equals(bctsAction))
+                actionIdeal = 1;
+        }
+
+        if(actionFeatures.size() > 0) { //When actions.size() is 0 the state is already gameover.
+            report.addLine(objects.length + "," + DistinctCounter.howManyDistinct(objects) + "," + numPareto + "," + DistinctCounter.howManyDistinct(paretoObjects)+","+actionBetweenPareto+","+actionIdeal);
+            System.out.println(objects.length + "," + DistinctCounter.howManyDistinct(objects) + "," + numPareto + "," + DistinctCounter.howManyDistinct(paretoObjects)+","+actionBetweenPareto+","+actionIdeal);
         }
     }
 

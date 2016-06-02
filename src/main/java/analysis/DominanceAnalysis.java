@@ -23,7 +23,7 @@ public class DominanceAnalysis implements Analysis{
         this.weightArray = new double[weightVector.size()];
         for (int i = 0; i < weightArray.length; i++)
                 weightArray[i] = weightVector.get(i);
-        report.addLine("placements,distinct,pareto,pareto_distinct");
+        report.addLine("placements,distinct,pareto,pareto_distinct,action_within_pareto,action_ideal");
     }
 
     @Override
@@ -33,6 +33,8 @@ public class DominanceAnalysis implements Analysis{
         List<TetrisAction> bctsActions = BctsActions.get(stateBefore);
 
         boolean agentOptionsAreDominant = false;
+        int actionBetweenPareto = 0;
+        int actionIdeal = 0;
 
         double[][] objects = new double[actionFeatures.size()][weightVector.size()];
 
@@ -60,16 +62,25 @@ public class DominanceAnalysis implements Analysis{
                     if(actionFeatures.get(i).getFirst().equals(bctsAction))
                         agentOptionsAreDominant = true;
                 }
+                if(actionFeatures.get(i).getFirst().equals(action)){
+                    actionBetweenPareto = 1;
+                }
                 for (int j = 0; j < objects[0].length; j++) {
                     paretoObjects[paretoIdx][j] = objects[i][j];
                 }
                 paretoIdx++;
             }
         }
+
+        for (TetrisAction bctsAction : bctsActions) {
+            if(action.equals(bctsAction))
+                actionIdeal = 1;
+        }
+
         assert agentOptionsAreDominant;
         if(numPareto > 0) { //When numpareto is 0 the state is already gameover.
-            report.addLine(objects.length + "," + DistinctCounter.howManyDistinct(objects) + "," + numPareto + "," + DistinctCounter.howManyDistinct(paretoObjects));
-            System.out.println(objects.length + "," + DistinctCounter.howManyDistinct(objects) + "," + numPareto + "," + DistinctCounter.howManyDistinct(paretoObjects));
+            report.addLine(objects.length + "," + DistinctCounter.howManyDistinct(objects) + "," + numPareto + "," + DistinctCounter.howManyDistinct(paretoObjects)+","+actionBetweenPareto+","+actionIdeal);
+            System.out.println(objects.length + "," + DistinctCounter.howManyDistinct(objects) + "," + numPareto + "," + DistinctCounter.howManyDistinct(paretoObjects)+","+actionBetweenPareto+","+actionIdeal);
         }
     }
 

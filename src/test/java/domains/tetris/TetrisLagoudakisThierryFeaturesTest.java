@@ -64,6 +64,25 @@ public class TetrisLagoudakisThierryFeaturesTest {
     }
 
 
+//    @Test
+//    public void testFeatureValuesCopy() {
+//        for (int i = 0; i < statesLT.size() - 1; i++) {
+//            Pair<TetrisState, TetrisAction> stateActionPair = statesLT.get(i);
+//            TetrisState state = stateActionPair.getFirst();
+//            TetrisAction action = stateActionPair.getSecond();
+//            System.out.println(state.getStringKey());
+//            state.nextState(action.col, action.rot, null);
+//            state.piece = statesLT.get(i+1).getFirst().piece;
+//                System.out.println(state.getStringKey());
+//                List<Double> valuesState = TetrisFeatureSet.make(state.features, "lagoudakisthierry");
+//                TetrisState copy = state.copy();
+//                List<Double> valuesStateCopy = TetrisFeatureSet.make(copy.features, "lagoudakisthierry");
+//                for (int j = 0; j < valuesState.size(); j++) {
+//                    assertEquals(state.getStringKey() + "\n" + featureNamesLT.get(j), valuesState.get(j), valuesStateCopy.get(j));
+//                }
+//        }
+//    }
+
     @Test
     public void testStateActionFeaturesLT() {
         for (int i = 0; i < statesLT.size() - 1; i++) {

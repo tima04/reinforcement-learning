@@ -19,9 +19,9 @@ public class AmpiQ {
 
 	public static void main(String[] arg){
 
-
+		Random random = new Random(1);
 		String featureSet = "lagoudakisthierry";
-		Game game = new Game(1);
+		Game game = new Game(random);
 		List<Double> initialWeights = new ArrayList<>();
 		for (String name: game.getFeatureNames(featureSet)){
 			initialWeights.add(-0.);
@@ -39,7 +39,7 @@ public class AmpiQ {
 		else if (arg[0].equals("cum"))
 			actionType = UtilAmpi.ActionType.CUMDOM;
 
-		AmpiQ ampiq = new AmpiQ(game, featureSet, numIt, gamma, initialWeights, sampleSize, nrollout, actionType);
+		AmpiQ ampiq = new AmpiQ(game, featureSet, numIt, gamma, initialWeights, sampleSize, nrollout, actionType, random);
 		ampiq.iterate();
 	}
 
@@ -71,16 +71,13 @@ public class AmpiQ {
 	Game game = null;
 	String featureSet;
 	int numFeatures;
-	public Map<Object, String> policy = null;
-	public List<Boolean> policyChanges = null; // kth element is true(false) if in the kth iteration
-												// policy of some(none) state in the rolloutset changes.
 	public List<Object> rolloutSet = null;
 
 	private UtilAmpi.ActionType rolloutActionType;
 	Random random;
 
 
-	public AmpiQ(Game game, String featureSet, int maxSim, double gamma, List<Double> beta, int rolloutSetSize, int nRollout, UtilAmpi.ActionType rolloutActionType) {
+	public AmpiQ(Game game, String featureSet, int maxSim, double gamma, List<Double> beta, int rolloutSetSize, int nRollout, UtilAmpi.ActionType rolloutActionType, Random random) {
 		this.game = game;
 		this.featureSet = featureSet;
 		this.numFeatures = game.getFeatureNames(featureSet).size();
@@ -89,12 +86,10 @@ public class AmpiQ {
 		this.nRollout = nRollout;
 		this.gamma = gamma;
 		this.beta = beta;
-		this.policy = new HashMap<>();
-		this.policyChanges = new ArrayList<>();
 		this.rolloutSet = new ArrayList<Object>();
 		this.rolloutActionType = rolloutActionType;
 
-		this.random = new Random();
+		this.random = random;
 
 		// for logging: TODO: remove this
 		System.out.println("****************************");
@@ -103,7 +98,7 @@ public class AmpiQ {
 		for (int i = 0; i < betaVector.length; i++) {
 			betaVector[i] = beta.get(i);
 		}
-		EvaluateLinearAgent.gamesTetris(100, random, featureSet, beta, rolloutActionType,  paretoFeatureSet, paretoWeights, true);
+		EvaluateLinearAgent.gamesTetris(1, random, featureSet, beta, rolloutActionType,  paretoFeatureSet, paretoWeights, true);
 		System.out.println("****************************");
 	}
 
@@ -111,16 +106,16 @@ public class AmpiQ {
 	public void iterate() {
 		for (int k = 0; k <= this.maxSim; k++) {
 			long t0 = System.currentTimeMillis();
-
-			this.rolloutSet = RolloutUtil.getRolloutSetTetris(game, rolloutSetSize, beta, featureSet, rolloutActionType, paretoFeatureSet, paretoWeights);
+			System.out.println("next integer: " +random.nextInt());
+			this.rolloutSet = RolloutUtil.getRolloutSetTetris(game, rolloutSetSize, beta, featureSet, rolloutActionType, paretoFeatureSet, paretoWeights, random);
 
 			double[] ys = new double[this.rolloutSet.size()];
 			double[][] xs = new double[this.rolloutSet.size()][this.numFeatures];
 
 			for (int i = 0; i < this.rolloutSet.size(); i++) {
 				Object state = this.rolloutSet.get(i);
-				List<String> actions =  game.getActionsIncludingGameover(state, this.rolloutActionType, paretoFeatureSet, paretoWeights);//These actions include those that lead immediatly to gameover
-				String action = UtilAmpi.randomChoice(actions);
+				List<String> actions =  game.getActionsIncludingGameover(state, this.rolloutActionType, paretoFeatureSet, paretoWeights);
+				String action = UtilAmpi.randomChoice(actions, random);
 
 				List<Double> x = this.game.getFeatureValues(featureSet, state, action);
 				Pair<Object, String> sa = new Pair<>(state, action);

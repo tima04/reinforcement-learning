@@ -20,8 +20,8 @@ public class Game {
 //    final String paretoFeatureSet = "bcts";
 //    final double[] paretoWeights = new double[]{-13.08, -19.77, -9.22, -10.49, 6.60, -12.63, -24.04, -1.61};
 
-    public Game(long seed){
-        random = new Random(seed);
+    public Game(Random random){
+        this.random = random;
     }
 
     public List<Double> getFeatureValues(String featureSet, Object state) {
@@ -40,15 +40,6 @@ public class Game {
         return new ArrayList<>();
     }
 
-    public List<Double> getFeatureValuesIncludeGameOver(String featureSet, Object state, String action) {
-        TetrisState tState = (TetrisState) state;
-        List<Pair<TetrisAction,TetrisFeatures>> actionFeatures = tState.getActionsFeaturesList();
-        for (Pair<TetrisAction,TetrisFeatures> actionFeature : actionFeatures)
-            if( actionFeature.getFirst().name().equals(action))
-                return TetrisFeatureSet.make(actionFeature.getSecond(), featureSet);
-
-        return new ArrayList<>();
-    }
 
     public List<Pair<String, List<Double>>> getStateActionFeatureValues(String featureSet, Object state, String paretoFeatureSet, double[] paretoWeights) {
         return getStateActionFeatureValues(featureSet, state, UtilAmpi.ActionType.ANY, paretoFeatureSet, paretoWeights);
@@ -111,10 +102,10 @@ public class Game {
 //
             if(actions.isEmpty()) {
                 state = new TetrisState(random);
-                if(i % modulusFactor == 0) {
+                i++;
+                if(i % modulusFactor == 0)
                     states.add(state.copy());
-                    i++;
-                }
+
                 continue;
             }
 
@@ -138,7 +129,6 @@ public class Game {
             int chosenAction = random.nextInt(maxIndices.length);
             TetrisAction action = actionsPareto.get(maxIndices[chosenAction]).getFirst();
             state.nextState(action.col, action.rot, random);
-
             if(state.features.gameOver)
                 state = new TetrisState(random);
 

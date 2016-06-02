@@ -15,24 +15,29 @@ import java.util.Random;
 
 public class analyzeTetris {
 
-//    static String path = "src/main/resources/tetris/rawGames/bcts/";
-//    static String suffix = "Bcts";
-//    static int numSamples = 10000;
-////  Make sure board is 16 by 10
+    static String path = "src/main/resources/tetris/rawGames/bcts/";
+    static String suffix = "Bcts";
+    static int numSamples = 10000;
+//  Make sure board is 16 by 10
 
 //    static String path = "src/main/resources/tetris/rawGames/random/";
 //    static String suffix = "Random";
 //    static int numSamples = 200000;
 ////  Make sure board is 16 by 10
 
-//        static String path = "src/main/resources/tetris/rawGames/dom/";
-//    static String suffix = "Dom";
+//    static String path = "src/main/resources/tetris/rawGames/random_board/";
+//    static String suffix = "RandomBoard";
 //    static int numSamples = 200000;
 ////  Make sure board is 16 by 10
 
-        static String path = "src/main/resources/tetris/rawGames/cum/";
-    static String suffix = "Cumdom";
-    static int numSamples = 200000;
+//    static String path = "src/main/resources/tetris/rawGames/dom/";
+//    static String suffix = "Dom";
+//    static int numSamples = 200000;
+//////  Make sure board is 16 by 10
+
+//    static String path = "src/main/resources/tetris/rawGames/cum/";
+//    static String suffix = "Cumdom";
+//    static int numSamples = 200000;
 ////  Make sure board is 16 by 10
 
 //    static String path = "src/main/resources/tetris/rawGames/people/";
@@ -40,7 +45,7 @@ public class analyzeTetris {
 //    static int numSamples = 200000;
 ////Make sure board is 20 by 10
 
-    static String outpath = "src/main/resources/tetris/dominance/";
+    static String outpath = "src/main/resources/tetris/data/";
 
     static Random random = new Random(1);
 
@@ -71,18 +76,38 @@ public class analyzeTetris {
 
         //DOMINANCE
         Analysis dominance = new DominanceAnalysis();
-        dominance.startReport(outpath +"dominance" + suffix + ".txt");
+        dominance.startReport(outpath +"dom" + suffix + ".txt");
         analysisList.add(dominance);
 
         //CUMULATIVE DOMINANCE
         Analysis cumdominance = new CumDominanceAnalysis();
-        cumdominance.startReport(outpath +"cumdominance" + suffix + ".txt");
+        cumdominance.startReport(outpath +"cumdom" + suffix + ".txt");
         analysisList.add(cumdominance);
+//
+//        //NONCOMPENSATORINESS
+//        Analysis noncompensatoriness = new NoncompensatorinessAnalysis();
+//        noncompensatoriness.startReport(outpath +"noncom" + suffix + ".txt");
+//        analysisList.add(noncompensatoriness);
+//
+//        //MULTIPLE CUMULATIVE DOMINANCE
+//        Analysis multicumulativeDominance = new MultiDominanceAnalysis(MultiDominanceAnalysis.CUMDOM);
+//        multicumulativeDominance.startReport(outpath +"multicumdom" + suffix + ".txt");
+//        analysisList.add(multicumulativeDominance);
 
-        //NONCOMPENSATORINESS
-        Analysis noncompensatoriness = new NoncompensatorinessAnalysis();
-        noncompensatoriness.startReport(outpath +"noncompensation" + suffix + ".txt");
-        analysisList.add(noncompensatoriness);
+//        //MULTIPLE DOMINANCE
+//        Analysis multiDominance = new MultiDominanceAnalysis(MultiDominanceAnalysis.DOM);
+//        multiDominance.startReport(outpath +"multidom" + suffix + ".txt");
+//        analysisList.add(multiDominance);
+
+//        //Approximate Dominance
+        Analysis appdominance = new ApproximateDominanceAnalysis(4, 1);
+        appdominance.startReport(outpath +"appdom" + suffix + ".txt");
+        analysisList.add(appdominance);
+
+        //        //Approximate Dominance
+        Analysis appcumdominance = new ApproximateCumDominanceAnalysis(4, 1);
+        appcumdominance.startReport(outpath +"appcumdom" + suffix + ".txt");
+        analysisList.add(appcumdominance);
 
         return analysisList;
     }

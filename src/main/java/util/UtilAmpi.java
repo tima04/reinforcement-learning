@@ -1,6 +1,7 @@
 package util;
 
 
+import domains.tetris.TetrisState;
 import org.apache.commons.math3.linear.DecompositionSolver;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
@@ -8,6 +9,7 @@ import org.apache.commons.math3.linear.SingularValueDecomposition;
 import org.apache.commons.math3.util.Pair;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class UtilAmpi {
 
@@ -139,9 +141,12 @@ public static Pair<Object, String> makePair(Object state, String action) {
 	return new Pair<Object, String>(state, action);
 }
 
-public static <T> T randomChoice(List<T> xs) {
-	Random random = new Random();
+public static <T> T randomChoice(List<T> xs, Random random) {
 	return xs.get(random.nextInt(xs.size()));
+}
+
+public static <T> T randomChoice(List<T> xs) {
+	return randomChoice(xs, new Random());
 }
 
 	/**
@@ -176,6 +181,63 @@ public static <T> T randomChoice(List<T> xs) {
 			is_pareto = LinearDecisionRule.paretoCumDominanceSet(weights, objects);
 
 		return is_pareto;
+	}
+
+	//Works for tetris pile height but can be generalized
+	public static <T> List<T> getSubSampleWithUniformHeightNewTetris(List<T> states, int nsample) {
+		ArrayList<Integer> heights = states.stream()
+				.map(s -> ((TetrisState)s).features.pileHeight)
+				.collect(Collectors.toCollection(ArrayList::new));
+		Map<Integer, List<T>> map = new HashMap<>();
+		for (int i = 0; i < states.size(); i++) {
+			int h = heights.get(i);
+			List<T> xs = map.getOrDefault(h, new ArrayList<T>());
+			xs.add(states.get(i));
+			map.put(h, xs);
+		}
+		return UtilAmpi.uniformSample(map, nsample);
+	}
+
+
+
+	public static List<int[]> combinations(int n, int k){
+		int[] input = new int[n];    // input array
+		for (int i = 0; i < n; i++)
+			input[i] = i;
+
+		List<int[]> subsets = new ArrayList<>();
+
+		int[] s = new int[k];              // here we keep indices
+		// pointing to elements in input array
+
+		if (k <= input.length) {
+			// first index sequence: 0, 1, 2, ...
+			for (int i = 0; (s[i] = i) < k - 1; i++);
+			subsets.add(getSubset(input, s));
+			for(;;) {
+				int i;
+				// find position of item that can be incremented
+				for (i = k - 1; i >= 0 && s[i] == input.length - k + i; i--);
+				if (i < 0) {
+					break;
+				} else {
+					s[i]++;                    // increment this item
+					for (++i; i < k; i++) {    // fill up remaining items
+						s[i] = s[i - 1] + 1;
+					}
+					subsets.add(getSubset(input, s));
+				}
+			}
+		}
+		return subsets;
+	}
+
+	// generate actual subset by index sequence
+	static int[] getSubset(int[] input, int[] subset) {
+		int[] result = new int[subset.length];
+		for (int i = 0; i < subset.length; i++)
+			result[i] = input[subset[i]];
+		return result;
 	}
 }
 

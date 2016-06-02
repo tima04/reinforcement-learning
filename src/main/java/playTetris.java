@@ -1,6 +1,7 @@
 import domains.tetris.*;
 import org.apache.commons.math3.util.Pair;
 import util.Compute;
+import util.PickAction;
 import util.UtilAmpi;
 
 import java.util.*;
@@ -20,11 +21,13 @@ public class playTetris {
     weights.add(-24.04);
     weights.add(-1.61);
 
+     double[] paretoWeights = new double[]{-5, -6, -2, -3, 1, -4, -7, -1}; //It should have the same effect since the direction and order are the same.
+
         Random random = new Random(1);
 
         boolean limitGames = true; //If true the agent plays the number of games.
         int numSteps = 100000;
-        int numGames = 10;
+        int numGames = 100;
         int totalScore = 0;
         int steps;
         int totalSteps = 0;
@@ -51,8 +54,13 @@ public class playTetris {
                     break;
                 }
 
-                int actionIndex = pickActionRandom(random, actions);
-//                int actionIndex = pickActionGreedy(weights, random, actions);
+//                int actionIndex = PickAction.random(random, actions);
+//                List<List<Integer>> cueGroups = new ArrayList<>();
+//                cueGroups.add(Arrays.asList(1,3,5,6));
+//                cueGroups.add(Arrays.asList(0,2,4,7));
+//                int actionIndex = PickAction.multiPareto(paretoWeights, random, actions, "bcts", cueGroups, UtilAmpi.ActionType.CUMDOM);
+                  int actionIndex = PickAction.pareto_appr(paretoWeights, random, actions, "bcts", UtilAmpi.ActionType.CUMDOM, 4, 1);
+//                int actionIndex = PickAction.linear(weights, "bcts", random, actions);
                 TetrisAction action  = actions.get(actionIndex).getFirst();
     //                detailedReport.addLine(state.getString()+","+action.col+"_"+action.rot);
     //                detailedReport.generate();
@@ -82,24 +90,7 @@ public class playTetris {
 
     }
 
-    private static int pickActionRandom(Random random, List<Pair<TetrisAction, TetrisFeatures>> actions) {
-        return random.nextInt(actions.size());
-    }
 
-    static int pickActionGreedy(List<Double> weights, Random random, List<Pair<TetrisAction, TetrisFeatures>> actions){
-
-        double[] values = new double[actions.size()];
-        for (int i = 0; i < actions.size(); i++) {
-            TetrisFeatures features = actions.get(i).getSecond();
-            List<Double> featureValues = TetrisFeatureSet.make(features, "bcts");
-            values[i] = UtilAmpi.dotproduct(weights, featureValues);
-        }
-        if(values.length == 0)
-            return 0;
-        int[] maxIndices = Compute.indicesOfMax(values);
-        int chosenAction = maxIndices[random.nextInt(maxIndices.length)];
-        return chosenAction;
-    }
 
 
 
