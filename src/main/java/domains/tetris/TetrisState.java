@@ -15,7 +15,7 @@ import static domains.tetris.Tetromino.pieces;
 public class TetrisState implements State {
 
     boolean[][] board;
-    public static final int height = 16, width = 10, matHeight = height + 4;
+    public static final int height = 10, width = 10, matHeight = height + 4;
     Tetromino piece;
     public TetrisFeatures features;
     String stringKey;

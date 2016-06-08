@@ -55,8 +55,8 @@ public class Dpi {
 		//file = file + System.currentTimeMillis();
 		try {
 			System.out.println(fileName);
-//			System.setOut(new PrintStream(new File("src/main/resources/tetris/scores/dpi/"+fileName)));
-			System.setOut(new PrintStream(new File("scores/dpi/"+fileName)));
+			System.setOut(new PrintStream(new File("src/main/resources/tetris/scores/dpi/"+fileName)));
+//			System.setOut(new PrintStream(new File("scores/dpi/"+fileName)));
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
