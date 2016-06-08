@@ -1,7 +1,10 @@
-package algs;
+package algs.rl;
 
+import algs.Game;
+import domains.FeatureSet;
 import domains.tetris.EvaluateLinearAgent;
-import domains.tetris.TetrisState;
+import domains.tetris.TetrisFeatureSet;
+import domains.tetris.TetrisTaskLines;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.linear.SingularMatrixException;
 import org.apache.commons.math3.util.Pair;
@@ -20,8 +23,8 @@ public class AmpiQ {
 	public static void main(String[] arg){
 
 		Random random = new Random(1);
-		String featureSet = "lagoudakisthierry";
-		Game game = new Game(random);
+		FeatureSet featureSet = new TetrisFeatureSet("lagoudakisthierry");
+		Game game = new Game(random, new TetrisTaskLines(0.9));
 		List<Double> initialWeights = new ArrayList<>();
 		for (String name: game.getFeatureNames(featureSet)){
 			initialWeights.add(-0.);
@@ -60,7 +63,7 @@ public class AmpiQ {
 		}
 	}
 
-	final String paretoFeatureSet = "bcts";
+	final FeatureSet paretoFeatureSet = new TetrisFeatureSet("bcts");
 //	final double[] paretoWeights = new double[]{-13.08, -19.77, -9.22, -10.49, 6.60, -12.63, -24.04, -1.61};
 	final static double[] paretoWeights = new double[]{-5, -6, -2, -3, 1, -4, -7, -1}; //It should have the same effect since the direction and order are the same.
 
@@ -69,7 +72,7 @@ public class AmpiQ {
 	double gamma; //discount factor
 	List<Double> beta = null;
 	Game game = null;
-	String featureSet;
+	FeatureSet featureSet;
 	int numFeatures;
 	public List<Object> rolloutSet = null;
 
@@ -77,7 +80,7 @@ public class AmpiQ {
 	Random random;
 
 
-	public AmpiQ(Game game, String featureSet, int maxSim, double gamma, List<Double> beta, int rolloutSetSize, int nRollout, UtilAmpi.ActionType rolloutActionType, Random random) {
+	public AmpiQ(Game game, FeatureSet featureSet, int maxSim, double gamma, List<Double> beta, int rolloutSetSize, int nRollout, UtilAmpi.ActionType rolloutActionType, Random random) {
 		this.game = game;
 		this.featureSet = featureSet;
 		this.numFeatures = game.getFeatureNames(featureSet).size();
@@ -114,7 +117,7 @@ public class AmpiQ {
 
 			for (int i = 0; i < this.rolloutSet.size(); i++) {
 				Object state = this.rolloutSet.get(i);
-				List<String> actions =  game.getActionsIncludingGameover(state, this.rolloutActionType, paretoFeatureSet, paretoWeights);
+				List<String> actions =  game.getActionsIncludingGameover(state, this.rolloutActionType, featureSet, paretoFeatureSet, paretoWeights);
 				String action = UtilAmpi.randomChoice(actions, random);
 
 				List<Double> x = this.game.getFeatureValues(featureSet, state, action);

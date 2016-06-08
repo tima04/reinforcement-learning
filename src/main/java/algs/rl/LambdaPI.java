@@ -1,7 +1,11 @@
-package algs;
+package algs.rl;
 
 
+import algs.Game;
+import domains.FeatureSet;
 import domains.tetris.EvaluateLinearAgent;
+import domains.tetris.TetrisFeatureSet;
+import domains.tetris.TetrisTaskLines;
 import org.apache.commons.math3.linear.SingularMatrixException;
 import util.UtilAmpi;
 
@@ -25,7 +29,7 @@ public class LambdaPI {
 		for (int i = 0; i < 9; i++) {
 			initialWeights.add(0.);
 		}
-		String featureSet = "bertsekas";
+		FeatureSet featureSet = new TetrisFeatureSet("bertsekas");
 		int numIt = 30;
 		double gamma = 0.9;
 		double lambda = 0.9;
@@ -38,7 +42,7 @@ public class LambdaPI {
 			actionType = UtilAmpi.ActionType.CUMDOM;
 
 		Random random = new Random();
-		LambdaPI lambdaPI = new LambdaPI(new Game(random), "bertsekas", numIt, gamma, lambda, initialWeights, sampleSize, actionType, random);
+		LambdaPI lambdaPI = new LambdaPI(new Game(random, new TetrisTaskLines(0.9)), featureSet, numIt, gamma, lambda, initialWeights, sampleSize, actionType, random);
 		lambdaPI.iterate();
 	}
 
@@ -59,13 +63,13 @@ public class LambdaPI {
 		}
 	}
 
-	final static String paretoFeatureSet = "bcts";
+	final static FeatureSet paretoFeatureSet = new TetrisFeatureSet("bcts");
 //	final static double[] paretoWeights = new double[]{-13.08, -19.77, -9.22, -10.49, 6.60, -12.63, -24.04, -1.61};
 	final static double[] paretoWeights = new double[]{-5, -6, -2, -3, 1, -4, -7, -1}; //It should have the same effect since the direction and order are the same.
 
 
 	int maxSim, sampleSize, numFeatures;
-	String featureSet;
+	FeatureSet featureSet;
 	double gamma, lambda; //discount factor
 	List<Double> beta = null;
 	Game game = null;
@@ -73,7 +77,7 @@ public class LambdaPI {
 	public UtilAmpi.ActionType actionType;
 	Random random;
 
-	public LambdaPI(Game game, String featureSet, int maxSim,
+	public LambdaPI(Game game, FeatureSet featureSet, int maxSim,
 					double gamma, double lambda, List<Double> beta, int sampleSize,
 					UtilAmpi.ActionType actionType, Random random) {
 

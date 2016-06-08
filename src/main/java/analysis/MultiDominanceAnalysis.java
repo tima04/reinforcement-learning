@@ -1,6 +1,7 @@
 package analysis;
 
 import analysis.util.BctsActions;
+import domains.FeatureSet;
 import domains.tetris.*;
 import org.apache.commons.math3.util.Pair;
 import util.Compute;
@@ -24,9 +25,12 @@ public class MultiDominanceAnalysis implements Analysis {
     public final static int CUMDOM = 1;
     public final static int DOM = 2;
 
+    FeatureSet featureSet;
 
-    public MultiDominanceAnalysis(int type){
+
+    public MultiDominanceAnalysis(int type, FeatureSet featureSet){
         this.type = type;
+        this.featureSet = featureSet;
     }
 
 
@@ -96,7 +100,7 @@ public class MultiDominanceAnalysis implements Analysis {
 
         //fill objects only with all cues
         for (int i = 0; i < actionFeatures.size(); i++) {
-            List<Double> valuesList = TetrisFeatureSet.make(actionFeatures.get(i).getSecond(), "bcts");
+            List<Double> valuesList = featureSet.make(actionFeatures.get(i).getSecond());
             for (int j = 0; j < valuesList.size(); j++) {
                     objects[i][j] = valuesList.get(j);
             }
@@ -113,7 +117,7 @@ public class MultiDominanceAnalysis implements Analysis {
 
                 //fill objects only with cues of cuegroup
                 for (int i = 0; i < actionFeatures.size(); i++) {
-                    List<Double> valuesList = TetrisFeatureSet.make(actionFeatures.get(i).getSecond(), "bcts");
+                    List<Double> valuesList = featureSet.make(actionFeatures.get(i).getSecond());
                     int index = 0;
                     for (int j = 0; j < valuesList.size(); j++) {
                         if (index < cueGroup.size() && cueGroup.get(index) == j) {

@@ -1,5 +1,9 @@
 package policy;
 
+import domains.Action;
+import domains.FeatureSet;
+import domains.Features;
+import domains.State;
 import domains.tetris.TetrisAction;
 import domains.tetris.TetrisFeatureSet;
 import domains.tetris.TetrisFeatures;
@@ -15,21 +19,21 @@ import java.util.Random;
 
 public class LinearPick implements PickAction{
     List<Double> weights;
-    String featureSet;
+    FeatureSet featureSet;
     Random random;
 
-    public LinearPick(List<Double> weights, String featureSet, Random random){
+    public LinearPick(List<Double> weights, FeatureSet featureSet, Random random){
         this.weights = weights;
         this.featureSet = featureSet;
         this.random = random;
     }
 
-    public int pick(TetrisState state,  List<Pair<TetrisAction, TetrisFeatures>> actions) {
+    public int pick(State state, List<Pair<Action, Features>> actions) {
         assert !actions.isEmpty();
         double[] values = new double[actions.size()];
         for (int i = 0; i < actions.size(); i++) {
-            TetrisFeatures features = actions.get(i).getSecond();
-            List<Double> featureValues = TetrisFeatureSet.make(features, featureSet);
+            Features features = actions.get(i).getSecond();
+            List<Double> featureValues = featureSet.make(features);
             values[i] = UtilAmpi.dotproduct(weights, featureValues);
         }
         int[] maxIndices = Compute.indicesOfMax(values);

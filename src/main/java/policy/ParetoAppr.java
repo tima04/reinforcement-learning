@@ -1,5 +1,9 @@
 package policy;
 
+import domains.Action;
+import domains.FeatureSet;
+import domains.Features;
+import domains.State;
 import domains.tetris.TetrisAction;
 import domains.tetris.TetrisFeatureSet;
 import domains.tetris.TetrisFeatures;
@@ -18,13 +22,13 @@ import java.util.Random;
 public class ParetoAppr implements PickAction{
 
     double[] weights;
-    String featureSet;
+    FeatureSet featureSet;
     UtilAmpi.ActionType type;
     int betterIn;
     int worseIn;
     Random random;
 
-    public ParetoAppr(double[] weights, String featureSet, UtilAmpi.ActionType type, int betterIn, int worseIn, Random random){
+    public ParetoAppr(double[] weights, FeatureSet featureSet, UtilAmpi.ActionType type, int betterIn, int worseIn, Random random){
         this.weights = weights;
         this.featureSet = featureSet;
         this.type = type;
@@ -38,12 +42,12 @@ public class ParetoAppr implements PickAction{
      * @param actionFeatures
      * @return
      */
-    public int pick(TetrisState state, List<Pair<TetrisAction, TetrisFeatures>> actionFeatures){
+    public int pick(State state, List<Pair<Action, Features>> actionFeatures){
         double[][] objects = new double[actionFeatures.size()][weights.length];
 
         //fill objects only with all cues
         for (int i = 0; i < actionFeatures.size(); i++) {
-            List<Double> valuesList = TetrisFeatureSet.make(actionFeatures.get(i).getSecond(), featureSet);
+            List<Double> valuesList = featureSet.make(actionFeatures.get(i).getSecond());
             for (int j = 0; j < valuesList.size(); j++) {
                 objects[i][j] = valuesList.get(j);
             }

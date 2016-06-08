@@ -2,6 +2,7 @@ package analysis;
 
 
 import analysis.util.BctsActions;
+import domains.FeatureSet;
 import domains.tetris.*;
 import org.apache.commons.math3.util.Pair;
 import util.DistinctCounter;
@@ -15,6 +16,12 @@ public class DominanceAnalysis implements Analysis{
     GeneralReport report;
     List<Double> weightVector;
     double[] weightArray;
+
+    FeatureSet featureSet;
+
+    public DominanceAnalysis(FeatureSet featureSet){
+        this.featureSet = featureSet;
+    }
 
     @Override
     public void startReport(String reportPath) {
@@ -40,7 +47,7 @@ public class DominanceAnalysis implements Analysis{
 
         //fill objects
         for (int i = 0; i < actionFeatures.size(); i++) {
-            List<Double> valuesList = TetrisFeatureSet.make(actionFeatures.get(i).getSecond(), "bcts");
+            List<Double> valuesList = featureSet.make(actionFeatures.get(i).getSecond());
             for (int j = 0; j < valuesList.size(); j++) {
                 objects[i][j] = valuesList.get(j);
             }

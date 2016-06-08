@@ -1,6 +1,7 @@
 package domains.tetris;
 
 
+import domains.FeatureSet;
 import org.apache.commons.math3.util.Pair;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,6 +27,8 @@ public class TetrisLagoudakisThierryFeaturesTest {
     List<Pair<TetrisState,TetrisAction>> statesLT;
     List<List<Double>> featureValuesLT;
     List<String> featureNamesLT;
+
+    FeatureSet featureSet = new TetrisFeatureSet("lagoudakisthierry");
 
     double epsilon = .0000001; //Error tolerance in feature value
 
@@ -94,7 +97,7 @@ public class TetrisLagoudakisThierryFeaturesTest {
             System.out.println(state.getStringKey());
             System.out.println(action.name());
             if(!state.features.gameOver) {
-                List<Double> valuesState = TetrisFeatureSet.make(state.features, "lagoudakisthierry");
+                List<Double> valuesState = featureSet.make(state.features);
                 List<Double> valuesStateFile = featureValuesLT.get(i + 1);
                 assertEquals(valuesStateFile.size(), valuesState.size());
                 for (int featureNumber = 0; featureNumber < valuesState.size(); featureNumber++) {

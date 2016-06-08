@@ -1,6 +1,7 @@
 package analysis.util;
 
 
+import domains.FeatureSet;
 import domains.tetris.*;
 import org.apache.commons.math3.util.Pair;
 import util.Compute;
@@ -11,6 +12,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class BctsActions {
+
+    static FeatureSet featureSet = new TetrisFeatureSet("bcts");
 
     public static List<TetrisAction> get(TetrisState state){
         List<Pair<TetrisAction, TetrisFeatures>> actionsWithGameover = state.getActionsFeaturesList();
@@ -24,7 +27,7 @@ public class BctsActions {
         double[] values = new double[actions.size()];
         for (int i = 0; i < actions.size(); i++) {
             TetrisFeatures features = actions.get(i).getSecond();
-            values[i] = UtilAmpi.dotproduct(weights, TetrisFeatureSet.make(features, "bcts"));
+            values[i] = UtilAmpi.dotproduct(weights, featureSet.make(features));
         }
         int[] maxIndices = Compute.indicesOfMax(values);
         for (int i = 0; i < maxIndices.length; i++)

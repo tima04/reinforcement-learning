@@ -1,6 +1,7 @@
 package domains.tetris;
 
 
+import domains.FeatureSet;
 import org.apache.commons.math3.stat.descriptive.rank.Median;
 import org.apache.commons.math3.util.Pair;
 import util.Compute;
@@ -13,7 +14,7 @@ import java.util.stream.Collectors;
 
 public class EvaluateLinearAgent {
 
-    public static int gamesTetris(int numGames, Random random, String featureSet, List<Double> weights, UtilAmpi.ActionType actionType, String paretoFeatureSet, double[] paretoWeights, boolean display) {
+    public static int gamesTetris(int numGames, Random random, FeatureSet featureSet, List<Double> weights, UtilAmpi.ActionType actionType, FeatureSet paretoFeatureSet, double[] paretoWeights, boolean display) {
         int totalScore = 0;
         int maxScore = 0;
         int minScore = Integer.MAX_VALUE;
@@ -27,7 +28,7 @@ public class EvaluateLinearAgent {
                                                                 .filter(p -> !p.getSecond().gameOver).collect(Collectors.toList());
 
 
-                List<Pair<String,List<Double>>> featureSetParetoValues = actions.stream().map(p -> new Pair<String,List<Double>>(p.getFirst().name(), TetrisFeatureSet.make(p.getSecond(), paretoFeatureSet))).collect(Collectors.toList());
+                List<Pair<String,List<Double>>> featureSetParetoValues = actions.stream().map(p -> new Pair<String,List<Double>>(p.getFirst().name(), paretoFeatureSet.make(p.getSecond()))).collect(Collectors.toList());
                 if(actions.isEmpty())
                     break;
 
@@ -40,7 +41,7 @@ public class EvaluateLinearAgent {
                 double[] values = new double[actionPareto.size()];
                 for (int i = 0; i < actionPareto.size(); i++) {
                     TetrisFeatures features = actionPareto.get(i).getSecond();
-                    values[i] = UtilAmpi.dotproduct(weights, TetrisFeatureSet.make(features, featureSet));
+                    values[i] = UtilAmpi.dotproduct(weights, featureSet.make(features));
                 }
                 int[] maxIndices = Compute.indicesOfMax(values);
                 int chosenAction = random.nextInt(maxIndices.length);

@@ -1,6 +1,7 @@
 package domains.tetris;
 
 
+import domains.FeatureSet;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -24,6 +25,7 @@ public class TetrisStateTest {
     List<Pair<TetrisState,TetrisAction>> states;
     List<List<Double>> featureValues;
     List<String> featureNames;
+    FeatureSet featureSet;
 
     List<Pair<TetrisState,TetrisAction>> statesLT;
     List<List<Double>> featureValuesLT;
@@ -38,6 +40,7 @@ public class TetrisStateTest {
 
     private void loadLists() {
         try {
+            featureSet = new TetrisFeatureSet("thierry");
             states = new ArrayList<>();
             featureValues = new ArrayList<>();
             featureNames = new ArrayList<>();
@@ -102,43 +105,43 @@ public class TetrisStateTest {
 
     @Test
     public void testLandingHeightAfterAction(){
-        testStateActionFeature(0, "thierry");
+        testStateActionFeature(0);
     }
 
 
     @Test
     public void testErodedCellsAfterAction(){
-        testStateActionFeature(1, "thierry");
+        testStateActionFeature(1);
     }
 
     @Test
     public void testRowTransitionsAfterAction(){
-        testStateActionFeature(2, "thierry");
+        testStateActionFeature(2);
     }
 
     @Test
     public void testColTransitionsAfterAction(){
-        testStateActionFeature(3, "thierry");
+        testStateActionFeature(3);
     }
 
     @Test
     public void testHolesAfterAction(){
-        testStateActionFeature(4, "thierry");
+        testStateActionFeature(4);
     }
 
     @Test
     public void testCumWellsAfterAction(){
-        testStateActionFeature(5, "thierry");
+        testStateActionFeature(5);
     }
 
     @Test
     public void testHolesDepthAfterAction(){
-        testStateActionFeature(6, "thierry");
+        testStateActionFeature(6);
     }
 
     @Test
     public void testRowsWithHolesAfterAction(){
-        testStateActionFeature(7, "thierry");
+        testStateActionFeature(7);
     }
 
 
@@ -163,21 +166,21 @@ public class TetrisStateTest {
         for (int i = 0; i < states.size(); i++) {
             Pair<TetrisState, TetrisAction> stateActionPair = states.get(i);
             TetrisState state = stateActionPair.getFirst();
-            List<Double> valuesState = TetrisFeatureSet.make(state.features, "thierry");
+            List<Double> valuesState = featureSet.make(state.features);
             List<Double> valuesStateFile = featureValues.get(i);
             System.out.println(state.getStringKey());
             assertTrue("Error in feature " + featureNames.get(featureNumber)+": expected: "+valuesStateFile.get(featureNumber)+", found: "+valuesState.get(featureNumber) +"\n state: " + state.getStringKey(), Math.abs(valuesState.get(featureNumber) - valuesStateFile.get(featureNumber)) < epsilon);
         }
     }
 
-    private void testStateActionFeature(int featureNumber, String featureSet) {
+    private void testStateActionFeature(int featureNumber) {
         for (int i = 0; i < states.size() - 1; i++) {
             Pair<TetrisState, TetrisAction> stateActionPair = states.get(i);
             TetrisState state = stateActionPair.getFirst();
             TetrisAction action = stateActionPair.getSecond();
             state.nextState(action.col, action.rot, null);
             if(!state.features.gameOver) {
-                List<Double> valuesState = TetrisFeatureSet.make(state.features, featureSet);
+                List<Double> valuesState = featureSet.make(state.features);
                 List<Double> valuesStateFile = featureValues.get(i + 1);
                 System.out.println(state.getStringKey());
                 assertTrue("Error in feature " + featureNames.get(featureNumber) + ": expected: " + valuesStateFile.get(featureNumber) + ", found: " + valuesState.get(featureNumber) + "\n state: " + state.getStringKey(), Math.abs(valuesState.get(featureNumber) - valuesStateFile.get(featureNumber)) < epsilon);

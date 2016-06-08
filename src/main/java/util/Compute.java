@@ -67,6 +67,16 @@ public class Compute {
         return max;
     }
 
+    /** @return maximum value in input list. */
+    public static double max(List<Double> list){
+        double max = list.get(0);
+        for (int i = 1; i < list.size(); i++)
+            if (list.get(i) > max)
+                max = list.get(i);
+        return max;
+    }
+
+
     // Returns a random number between 0 and n-1
     public static int randomIndex(int n, Random random) {
         return random.nextInt(n);

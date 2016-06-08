@@ -1,12 +1,18 @@
 package domains.tetris;
 
 
+import domains.Action;
+import domains.Features;
+import domains.State;
 import org.apache.commons.math3.util.Pair;
 import util.Compute;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
-public class TetrisState {
+import static domains.tetris.Tetromino.pieces;
+
+public class TetrisState implements State {
 
     boolean[][] board;
     public static final int height = 16, width = 10, matHeight = height + 4;
@@ -29,7 +35,7 @@ public class TetrisState {
 
         this.rand = rand;
         features = new TetrisFeatures.Builder(height, width, 0, 0, 0, false).board(board).build();
-        piece = Tetromino.pieces.get(rand.nextInt(Tetromino.pieces.size()));
+        piece = pieces.get(rand.nextInt(pieces.size()));
     }
 
     TetrisState(boolean[][] board, Tetromino piece, int clearedLines, int nBricksCleared, double landingHeight, boolean gameOver, TetrisFeatures oldTetrisFeatures){
@@ -60,8 +66,8 @@ public class TetrisState {
     }
 
 
-    public List<Pair<TetrisAction, TetrisFeatures>> getActionsFeaturesList(){
-        List<Pair<TetrisAction, TetrisFeatures>> rslt = new ArrayList<>();
+    public List<Pair<Action, Features>> getActionFeaturesList(){
+        List<Pair<Action, Features>> rslt = new ArrayList<>();
         if(!features.gameOver) {
             for (int rot = 0; rot < piece.getNumRotations(); rot++) {
                 for (int col = 0; col <= width - piece.getRotatedPiece(rot)[0].length; col++) {
@@ -73,6 +79,24 @@ public class TetrisState {
         }
         return rslt;
     }
+
+    public List<Pair<TetrisAction, TetrisFeatures>> getActionsFeaturesList(){
+        return getActionFeaturesList().stream().map(p -> new Pair<TetrisAction, TetrisFeatures>((TetrisAction)p.getFirst(), (TetrisFeatures)p.getSecond())).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Action> getActions() {
+        List<Action> rslt = new ArrayList<>();
+        if(!features.gameOver) {
+            for (int rot = 0; rot < piece.getNumRotations(); rot++) {
+                for (int col = 0; col <= width - piece.getRotatedPiece(rot)[0].length; col++) {
+                    rslt.add(new TetrisAction(col, rot));
+                }
+            }
+        }
+        return rslt;
+    }
+
 
     /**
      * Changes the state for the one resulting after placing the rotated piece on the given column.
@@ -104,7 +128,7 @@ public class TetrisState {
         if(tetromino != null)
             piece = tetromino;
         else
-            piece = Tetromino.pieces.get(random.nextInt(Tetromino.pieces.size()));
+            piece = pieces.get(random.nextInt(pieces.size()));
     }
 
     public void nextState(int col, int rot, Random random){
@@ -113,7 +137,7 @@ public class TetrisState {
 
     public List<TetrisState> nextStates(int col, int rot) {
         List<TetrisState> nextStates = new ArrayList<>();
-        for (Tetromino tetromino : Tetromino.pieces) {
+        for (Tetromino tetromino : pieces) {
             TetrisState base = this.copy();
             base.nextState(col, rot, null, tetromino);
             nextStates.add(base);
@@ -410,6 +434,22 @@ public class TetrisState {
                 rslt += "\n";
         }
         System.out.println(rslt);
+    }
+
+
+    @Override
+    public void getEffect(Action a, List<State> sprimes, List<Double> tprobs) {
+        for (Tetromino tetromino : pieces) {
+            TetrisState sprime = this.copy();
+            sprime.nextState(((TetrisAction) a).col, ((TetrisAction) a).rot, rand, tetromino);
+            sprimes.add(sprime);
+            tprobs.add((double)1/(double)7);
+        }
+    }
+
+    @Override
+    public Features features() {
+        return features;
     }
 
 

@@ -1,20 +1,21 @@
-package algs;
+package algs.rl;
 
 
+import algs.Game;
+import domains.FeatureSet;
 import domains.tetris.EvaluateLinearAgent;
+import domains.tetris.TetrisFeatureSet;
+import domains.tetris.TetrisState;
+import domains.tetris.TetrisTaskLines;
 import fr.inria.optimization.cmaes.CMAEvolutionStrategy;
 import fr.inria.optimization.cmaes.CMASolution;
 import fr.inria.optimization.cmaes.fitness.IObjectiveFunction;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.CMAESOptimizer;
 import org.apache.commons.math3.util.Pair;
-import util.Compute;
 import util.RolloutUtil;
 import util.UtilAmpi;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
+import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -24,19 +25,17 @@ public class Dpi {
 
 		Random random = new Random();
 //		Random random = new Random(1); // fixed seed
-		String featureSet = "thierry";
-		Game game = new Game(random);
+		FeatureSet featureSet = new TetrisFeatureSet("thierry");
+		Game game = new Game(random, new TetrisTaskLines(0.9));
 		List<Double> initialWeights = new ArrayList<>();
-		for (String name: game.getFeatureNames(featureSet)){
+		for (String name: game.getFeatureNames(featureSet))
 			initialWeights.add(-0.);
-		};
 
-
-		int numIt = 30;
+		int numIt = 5;
 		double gamma = 0.9;
-		int sampleSize = 50000;
+		int sampleSize = 5000;
 		int nrollout = 10;
-		setOutput("dpi_"+featureSet+"_"+sampleSize+"_"+arg[0]);
+		setOutput("dpi_"+featureSet.name()+"_"+sampleSize+"_"+arg[0]);
 		UtilAmpi.ActionType  actionType = UtilAmpi.ActionType.ANY;
 		if(arg[0].equals("dom"))
 			actionType = UtilAmpi.ActionType.DOM;
@@ -56,8 +55,8 @@ public class Dpi {
 		//file = file + System.currentTimeMillis();
 		try {
 			System.out.println(fileName);
-			System.setOut(new PrintStream(new File("src/main/resources/tetris/scores/dpi/"+fileName)));
-//			System.setOut(new PrintStream(new File("scores/ampiq/"+fileName)));
+//			System.setOut(new PrintStream(new File("src/main/resources/tetris/scores/dpi/"+fileName)));
+			System.setOut(new PrintStream(new File("scores/dpi/"+fileName)));
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -66,7 +65,7 @@ public class Dpi {
 
 
 	int maxSim, rolloutSetSize, nRollout;
-	String featureSetClassification;
+	FeatureSet featureSetClassification;
 	double gamma; //discount factor
 	List<Double> betaReg = null, betaCl = null;
 	Game game = null;
@@ -76,15 +75,16 @@ public class Dpi {
 
 	int samplingFactor = 3; //Size of the rollout set before subsampling is samplingFactor * rolloutSetSize.
 
-	final String paretoFeatureSet = "bcts";
+	final FeatureSet paretoFeatureSet = new TetrisFeatureSet("bcts");
 	//	final double[] paretoWeights = new double[]{-13.08, -19.77, -9.22, -10.49, 6.60, -12.63, -24.04, -1.61};
 	final static double[] paretoWeights = new double[]{-5, -6, -2, -3, 1, -4, -7, -1}; //It should have the same effect since the direction and order are the same.
 
 
-	public Dpi(Game game, String featureSetClassification, int maxSim,
+	public Dpi(Game game, FeatureSet featureSetClassification, int maxSim,
 			   int rolloutSetSize, int nRollout, double gamma, List<Double> betaCl,
 			   UtilAmpi.ActionType actionTypeCla, Random random) {
 		// beta is stateAction features, and theta is state features
+		System.out.println("TetrisBoard:" + TetrisState.height+"x"+TetrisState.width);
 		this.game = game;
 		this.featureSetClassification = featureSetClassification;
 		this.maxSim = maxSim;
@@ -106,14 +106,14 @@ public class Dpi {
 	}
 
 
-	public void iterate() {
+	public List<Double> iterate() {
 		for (int k = 0; k < this.maxSim; k++) {
 			long t0 = System.currentTimeMillis();
-			if(k==0){//Take first rollout set from good policy.
-				this.rolloutSet = RolloutUtil.getRolloutSetTetris(this.game, this.rolloutSetSize * samplingFactor, Arrays.asList(new Double[]{ -13.08,-19.77,-9.22,-10.49,6.60,-12.63,-24.04,-1.61,0.}), this.featureSetClassification, actionType, paretoFeatureSet, paretoWeights, random);
-			}else {
+//			if(k==0){//Take first rollout set from good policy.
+//				this.rolloutSet = RolloutUtil.getRolloutSetTetris(this.game, this.rolloutSetSize * samplingFactor, Arrays.asList(new Double[]{ -13.08,-19.77,-9.22,-10.49,6.60,-12.63,-24.04,-1.61,0.}), new TetrisFeatureSet("thierry"), actionType, paretoFeatureSet, paretoWeights, random);
+//			}else {
 				this.rolloutSet = RolloutUtil.getRolloutSetTetris(this.game, this.rolloutSetSize * samplingFactor, this.betaCl, this.featureSetClassification, actionType, paretoFeatureSet, paretoWeights, random);
-			}
+//			}
 
 			this.rolloutSet = UtilAmpi.getSubSampleWithUniformHeightNewTetris(rolloutSet, this.rolloutSetSize);
 
@@ -132,7 +132,11 @@ public class Dpi {
 
 			long t2 = System.currentTimeMillis();
 
-			List<Double> newbetaCl = minimizeUsingCMAES(of);
+			List<Double> newbetaCl;
+
+
+				newbetaCl = minimizeUsingCMAES(of);
+
 
 			this.betaCl = newbetaCl;
 			System.out.println("betaCL: " + this.betaCl);
@@ -148,6 +152,7 @@ public class Dpi {
 			System.out.println(String.format("This iteration took: %s seconds", (System.currentTimeMillis() - t0) / (1000.0)));
 			System.out.println("****************************");
 		}
+		return betaCl;
 	}
 
 
@@ -187,64 +192,76 @@ public class Dpi {
 //				betaVector[i] = 0;
 			}
 
+			PrintStream out = System.out;
+			System.setOut(new PrintStream(new OutputStream() {
+				@Override public void write(int b) throws IOException {}
+			}));
+			try {
 
-			// create a CMA-ES and set some initial values
-			CMAEvolutionStrategy cma = new CMAEvolutionStrategy();
-//			cma.readProperties(); // read options, see file CMAEvolutionStrategy.properties
-			cma.setDimension(game.getFeatureNames(featureSetClassification).size()); // overwrite some loaded properties
-			cma.setInitialX(betaVector); // in each dimension, also setTypicalX can be used
-			cma.setInitialStandardDeviation(30); // also a mandatory setting
-			cma.options.stopFitness = 1e-14;       // optional setting
+					// create a CMA-ES and set some initial values
+					CMAEvolutionStrategy cma = new CMAEvolutionStrategy();
+		//			cma.readProperties(); // read options, see file CMAEvolutionStrategy.properties
+					cma.setDimension(game.getFeatureNames(featureSetClassification).size()); // overwrite some loaded properties
+					cma.setInitialX(betaVector); // in each dimension, also setTypicalX can be used
+					cma.setInitialStandardDeviation(30); // also a mandatory setting
+					cma.options.stopFitness = 1e-14;       // optional setting
+					cma.options.verbosity = 0;
+					cma.options.writeDisplayToFile = 0;
 
-			double[] fitness = cma.init();  // new double[cma.parameters.getPopulationSize()];
-			// initial output to files
-			cma.writeToDefaultFilesHeaders(0); // 0 == overwrites old files
+					double[] fitness = cma.init();  // new double[cma.parameters.getPopulationSize()];
+					// initial output to files
+					cma.writeToDefaultFilesHeaders(0); // 0 == overwrites old files
 
-			// iteration loop
-			while(cma.stopConditions.getNumber() == 0) {
+					// iteration loop
+					while(cma.stopConditions.getNumber() == 0) {
 
-				// --- core iteration step ---
-				double[][] pop = cma.samplePopulation(); // get a new population of solutions
-				for(int i = 0; i < pop.length; ++i) {    // for each candidate solution i
-					// a simple way to handle constraints that define a convex feasible domain
-					// (like box constraints, i.e. variable boundaries) via "blind re-sampling"
-					// assumes that the feasible domain is convex, the optimum is
-					while (!fitfun.isFeasible(pop[i]))     //   not located on (or very close to) the domain boundary,
-						pop[i] = cma.resampleSingle(i);    //   initialX is feasible and initialStandardDeviations are
-					//   sufficiently small to prevent quasi-infinite looping here
-					// compute fitness/objective value
-					fitness[i] = fitfun.valueOf(pop[i]); // fitfun.valueOf() is to be minimized
-				}
-				cma.updateDistribution(fitness);         // pass fitness array to update search distribution
-				// --- end core iteration step ---
+						// --- core iteration step ---
+						double[][] pop = cma.samplePopulation(); // get a new population of solutions
+						for(int i = 0; i < pop.length; ++i) {    // for each candidate solution i
+							// a simple way to handle constraints that define a convex feasible domain
+							// (like box constraints, i.e. variable boundaries) via "blind re-sampling"
+							// assumes that the feasible domain is convex, the optimum is
+							while (!fitfun.isFeasible(pop[i]))     //   not located on (or very close to) the domain boundary,
+								pop[i] = cma.resampleSingle(i);    //   initialX is feasible and initialStandardDeviations are
+							//   sufficiently small to prevent quasi-infinite looping here
+							// compute fitness/objective value
+							fitness[i] = fitfun.valueOf(pop[i]); // fitfun.valueOf() is to be minimized
+						}
+						cma.updateDistribution(fitness);         // pass fitness array to update search distribution
+						// --- end core iteration step ---
 
-				// output to files and console
-//				cma.writeToDefaultFiles();
-//				int outmod = 150;
-//				if (cma.getCountIter() % (15*outmod) == 1)
-//					cma.printlnAnnotation(); // might write file as well
-//				if (cma.getCountIter() % outmod == 1)
-//					cma.println();
+						// output to files and console
+		//				cma.writeToDefaultFiles();
+		//				int outmod = 150;
+		//				if (cma.getCountIter() % (15*outmod) == 1)
+		//					cma.printlnAnnotation(); // might write file as well
+		//				if (cma.getCountIter() % outmod == 1)
+		//					cma.println();
+					}
+					// evaluate mean value as it is the best estimator for the optimum
+					cma.setFitnessOfMeanX(fitfun.valueOf(cma.getMeanX())); // updates the best ever solution
+
+					// final output
+			//		cma.writeToDefaultFiles(1);
+		//			cma.println();
+					CMASolution solution = cma.getBestSolution();
+
+
+
+					if(solution.getFitness() <= leastFitness){
+						x = solution.getX();
+						leastFitness = solution.getFitness();
+					}
+			} finally {
+				System.setOut(out);
 			}
-			// evaluate mean value as it is the best estimator for the optimum
-			cma.setFitnessOfMeanX(fitfun.valueOf(cma.getMeanX())); // updates the best ever solution
-
-			// final output
-	//		cma.writeToDefaultFiles(1);
-//			cma.println();
-			CMASolution solution = cma.getBestSolution();
-
-			if(solution.getFitness() <= leastFitness){
-				x = solution.getX();
-				leastFitness = solution.getFitness();
-			}
-			System.out.println("loss " + leastFitness);
+			System.out.println("cmaes optimizer loss " + leastFitness);
 		}
 		Double[] doubleArray = ArrayUtils.toObject(x);
 		double[] betaArray = new double[betaCl.size()];
 		for (int i = 0; i < betaArray.length; i++)
 			betaArray[i] = betaCl.get(i);
-		System.out.println("loss of last beta vector " + fitfun.valueOf(betaArray));
+		System.out.println("cmaes optimizer loss of last beta vector " + fitfun.valueOf(betaArray));
 		return Arrays.asList(doubleArray);
 	}
 

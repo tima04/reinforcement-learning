@@ -1,11 +1,27 @@
 package domains.tetris;
 
+import domains.FeatureSet;
+import domains.Features;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class TetrisFeatureSet {
+public class TetrisFeatureSet implements FeatureSet{
 
-    public static List<Double> make(TetrisFeatures tetrisFeatures, String featureSet){
+    final String featureSet;
+
+    public TetrisFeatureSet(String featureSet){
+        this.featureSet = featureSet;
+    }
+
+    @Override
+    public String name(){
+        return featureSet;
+    }
+
+    @Override
+    public List<Double> make(Features features){
+        TetrisFeatures tetrisFeatures = (TetrisFeatures)features;
         List<Double> values = new ArrayList<>();
         if(featureSet.equals("thierry")){
             values.add(tetrisFeatures.landingHeight);
@@ -58,7 +74,8 @@ public class TetrisFeatureSet {
         return values;
     }
 
-    public static List<String> featureNames(String featureSet){
+    @Override
+    public List<String> featureNames(){
         List<String> names = new ArrayList<>();
         if(featureSet.equals("thierry")){
             names.add("landingHeight");

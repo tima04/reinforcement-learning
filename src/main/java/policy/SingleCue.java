@@ -1,5 +1,6 @@
 package policy;
 
+import domains.*;
 import domains.tetris.TetrisAction;
 import domains.tetris.TetrisFeatureSet;
 import domains.tetris.TetrisFeatures;
@@ -7,6 +8,7 @@ import domains.tetris.TetrisState;
 import org.apache.commons.math3.util.Pair;
 import util.Compute;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -15,23 +17,25 @@ public class SingleCue implements PickAction{
 
     int sign;
     int featureIdx;
-    String featureSet;
+    FeatureSet featureSet;
     int ply;
+    Task task;
     Random random;
 
-    public SingleCue(double sign, int featureIdx, String featureSet, int ply, Random random){
+    public SingleCue(double sign, int featureIdx, FeatureSet featureSet, int ply, Random random, Task task){
         this.sign = (int) (sign/Math.abs(sign));
         this.featureIdx = featureIdx;
         this.featureSet = featureSet;
         this.ply = ply;
         this.random = random;
+        this.task = task;
     }
     /**
      * Single cue
      * @param actions
      * @return
      */
-    public int pick(TetrisState state, List<Pair<TetrisAction, TetrisFeatures>> actions){
+    public int pick(State state, List<Pair<Action, Features>> actions){
         return decisionNode(state, actions, ply).getFirst();
     }
 
@@ -43,7 +47,7 @@ public class SingleCue implements PickAction{
      * @param actions
      * @return
      */
-    int singleCue(List<Pair<TetrisAction, TetrisFeatures>> actions){
+    int singleCue(List<Pair<Action, Features>> actions){
         int[] indicesOfMax;
         if(actions.size() == 0)
             return 0;
@@ -65,12 +69,12 @@ public class SingleCue implements PickAction{
      * @param ply
      * @return
      */
-    Pair<Integer, Double> decisionNode(TetrisState state, List<Pair<TetrisAction, TetrisFeatures>> actions, int ply){
+    Pair<Integer, Double> decisionNode(State state, List<Pair<Action, Features>> actions, int ply){
         if(ply <= 0){
             if(actions.size() == 0)
                 return new Pair(0, 0.);
             int actionIdx = singleCue(actions);
-            return new Pair(actionIdx, TetrisFeatureSet.make(actions.get(actionIdx).getSecond(), featureSet).get(featureIdx));
+            return new Pair(actionIdx, featureSet.make(actions.get(actionIdx).getSecond()).get(featureIdx));
         }else{
             int[] indicesOfMax;
             if(actions.size() == 0)
@@ -88,11 +92,11 @@ public class SingleCue implements PickAction{
         }
     }
 
-    private static int[] findIndicesOfBestValue(List<Pair<TetrisAction, TetrisFeatures>> actions, int sign, String featureSet, int featureIdx) {
-        double[][] objects = new double[actions.size()][TetrisFeatureSet.featureNames(featureSet).size()];
+    private static int[] findIndicesOfBestValue(List<Pair<Action, Features>> actions, int sign, FeatureSet featureSet, int featureIdx) {
+        double[][] objects = new double[actions.size()][featureSet.featureNames().size()];
         //fill objects only with all cues
         for (int i = 0; i < actions.size(); i++) {
-            List<Double> valuesList = TetrisFeatureSet.make(actions.get(i).getSecond(), featureSet);
+            List<Double> valuesList = featureSet.make(actions.get(i).getSecond());
             for (int j = 0; j < valuesList.size(); j++) {
                 objects[i][j] = valuesList.get(j);
             }
@@ -105,12 +109,15 @@ public class SingleCue implements PickAction{
         return Compute.indicesOfMax(signedFeatureValue);
     }
 
-    double expectationNode(TetrisState state, TetrisAction action, int ply) {
+    double expectationNode(State state, Action action, int ply) {
         double expectation = 0;
+        List<State> sprimes = new ArrayList<>();
+        List<Double> probs = new ArrayList<>();
+        state.getEffect(action, sprimes, probs);
         double prob = 1/7;
-        for (TetrisState tetrisState : state.nextStates(action.col, action.rot)) {
-            List<Pair<TetrisAction, TetrisFeatures>> actions = tetrisState.getActionsFeaturesList();
-            actions = actions.stream().filter(p -> !p.getSecond().gameOver).collect(Collectors.toList());//filter out gameover actions.
+        for (State tetrisState : sprimes) {
+            List<Pair<Action, Features>> actions = tetrisState.getActionFeaturesList();
+            actions = actions.stream().filter(p -> task.taskEnds(p.getSecond())).collect(Collectors.toList());//filter out gameover actions.
             double value = decisionNode(tetrisState, actions, ply - 1).getSecond();
             expectation += value * prob;
         }

@@ -1,5 +1,8 @@
 package policy;
 
+import domains.Action;
+import domains.Features;
+import domains.State;
 import domains.tetris.TetrisAction;
 import domains.tetris.TetrisFeatures;
 import domains.tetris.TetrisState;
@@ -15,7 +18,7 @@ public class RandomPick implements PickAction{
         this.random = random;
     }
 
-    public int pick(TetrisState state, List<Pair<TetrisAction, TetrisFeatures>> actions) {
+    public int pick(State state, List<Pair<Action, Features>> actions) {
         return random.nextInt(actions.size());
     }
 }

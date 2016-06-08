@@ -113,9 +113,10 @@ public static List<Double> getConvexCombination(List<Double> xs, List<Double> ys
 
 	//Returns a sample from the List (value of the map) uniformly distributed according to the Integer (key of the map).
 public static <T> List<T> uniformSample(Map<Integer, List<T>> map, int nsample) {
-	map.keySet().stream()
-		.forEach(k -> System.out.println("Before sampling, key: " + k + " elts: " + map.get(k).size()));
+//	map.keySet().stream()
+//		.forEach(k -> System.out.println("Before sampling, key: " + k + " elts: " + map.get(k).size()));
 	List<T> rslt = new ArrayList<>();
+	System.out.println("Subsampling with uniform height.");
 	return sampleHelper(map, nsample, rslt);
 }
 
@@ -131,7 +132,7 @@ private static <T> List<T> sampleHelper(Map<Integer, List<T>> map, int nsample, 
 	});
 	int k = Math.min(nsample/map.size(), map.get(minKey).size());
 	rslt.addAll(new ArrayList<>(map.get(minKey).subList(0, k)));
-	System.out.println("after sampling, key: " + minKey + " nelts: " + k);
+//	System.out.println("after sampling, key: " + minKey + " nelts: " + k);
 	map.remove(minKey);
 	return sampleHelper(map, nsample-k, rslt);
 }

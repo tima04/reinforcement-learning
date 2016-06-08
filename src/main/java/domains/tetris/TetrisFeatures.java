@@ -7,12 +7,13 @@ import java.util.function.ToIntBiFunction;
 import java.util.stream.Collectors;
 import java.lang.RuntimeException;
 
+import domains.Features;
 import org.apache.commons.math3.analysis.function.Max;
 import org.apache.commons.math3.util.Pair;
 
 import domains.tetris.TetrisFeatures.Builder;
 
-public class TetrisFeatures {
+public class TetrisFeatures implements Features {
 
 	public final int height; //board height
 	public final int width; //board width

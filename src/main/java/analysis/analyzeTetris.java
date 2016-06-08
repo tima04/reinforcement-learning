@@ -1,6 +1,8 @@
 package analysis;
 
+import domains.FeatureSet;
 import domains.tetris.TetrisAction;
+import domains.tetris.TetrisFeatureSet;
 import domains.tetris.TetrisState;
 import org.apache.commons.math3.util.Pair;
 import util.ReservoirSample;
@@ -14,6 +16,8 @@ import java.util.List;
 import java.util.Random;
 
 public class analyzeTetris {
+
+    static FeatureSet featureSet = new TetrisFeatureSet("bcts");
 
     static String path = "src/main/resources/tetris/rawGames/bcts/";
     static String suffix = "Bcts";
@@ -75,37 +79,37 @@ public class analyzeTetris {
         List<Analysis> analysisList = new ArrayList<>();
 
         //DOMINANCE
-        Analysis dominance = new DominanceAnalysis();
+        Analysis dominance = new DominanceAnalysis(new TetrisFeatureSet("bcts"));
         dominance.startReport(outpath +"dom" + suffix + ".txt");
         analysisList.add(dominance);
 
         //CUMULATIVE DOMINANCE
-        Analysis cumdominance = new CumDominanceAnalysis();
+        Analysis cumdominance = new CumDominanceAnalysis(new TetrisFeatureSet("bcts"));
         cumdominance.startReport(outpath +"cumdom" + suffix + ".txt");
         analysisList.add(cumdominance);
 //
 //        //NONCOMPENSATORINESS
-//        Analysis noncompensatoriness = new NoncompensatorinessAnalysis();
+//        Analysis noncompensatoriness = new NoncompensatorinessAnalysis(new TetrisFeatureSet("bcts"));
 //        noncompensatoriness.startReport(outpath +"noncom" + suffix + ".txt");
 //        analysisList.add(noncompensatoriness);
 //
 //        //MULTIPLE CUMULATIVE DOMINANCE
-//        Analysis multicumulativeDominance = new MultiDominanceAnalysis(MultiDominanceAnalysis.CUMDOM);
+//        Analysis multicumulativeDominance = new MultiDominanceAnalysis(MultiDominanceAnalysis.CUMDOM, new TetrisFeatureSet("bcts"));
 //        multicumulativeDominance.startReport(outpath +"multicumdom" + suffix + ".txt");
 //        analysisList.add(multicumulativeDominance);
 
 //        //MULTIPLE DOMINANCE
-//        Analysis multiDominance = new MultiDominanceAnalysis(MultiDominanceAnalysis.DOM);
+//        Analysis multiDominance = new MultiDominanceAnalysis(MultiDominanceAnalysis.DOM, new TetrisFeatureSet("bcts"));
 //        multiDominance.startReport(outpath +"multidom" + suffix + ".txt");
 //        analysisList.add(multiDominance);
 
 //        //Approximate Dominance
-        Analysis appdominance = new ApproximateDominanceAnalysis(4, 1);
+        Analysis appdominance = new ApproximateDominanceAnalysis(4, 1, featureSet);
         appdominance.startReport(outpath +"appdom" + suffix + ".txt");
         analysisList.add(appdominance);
 
         //        //Approximate Dominance
-        Analysis appcumdominance = new ApproximateCumDominanceAnalysis(4, 1);
+        Analysis appcumdominance = new ApproximateCumDominanceAnalysis(4, 1, featureSet);
         appcumdominance.startReport(outpath +"appcumdom" + suffix + ".txt");
         analysisList.add(appcumdominance);
 

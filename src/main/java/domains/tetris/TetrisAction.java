@@ -1,7 +1,9 @@
 package domains.tetris;
 
 
-public class TetrisAction {
+import domains.Action;
+
+public class TetrisAction implements Action {
 
     public final int col;
     public final int rot;
@@ -9,6 +11,11 @@ public class TetrisAction {
     public TetrisAction(int col, int rot){
         this.col = col;
         this.rot = rot;
+    }
+
+    @Override
+    public int id() {
+        return hashCode();
     }
 
     public String name(){

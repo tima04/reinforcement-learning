@@ -77,5 +77,6 @@ classes/
 GTAGS
 GPATH
 GRTAGS
+
 src/main/resources/
 .Rproj.user
