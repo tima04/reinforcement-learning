@@ -2,9 +2,7 @@ package algs.rl;
 
 import algs.Game;
 import domains.FeatureSet;
-import domains.tetris.EvaluateLinearAgent;
-import domains.tetris.TetrisFeatureSet;
-import domains.tetris.TetrisTaskLines;
+import domains.tetris.*;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.linear.SingularMatrixException;
 import org.apache.commons.math3.util.Pair;
@@ -22,10 +20,11 @@ public class AmpiQ {
 
 	public static void main(String[] arg){
 
-		Random random = new Random(1);
+		Random random = new Random();
 		FeatureSet featureSet = new TetrisFeatureSet("lagoudakisthierry");
 		Game game = new Game(random, new TetrisTaskLines(0.9));
 		List<Double> initialWeights = new ArrayList<>();
+		TetrisParameters.getInstance().setSize(10,10);
 		for (String name: game.getFeatureNames(featureSet)){
 			initialWeights.add(-0.);
 		};
@@ -33,9 +32,9 @@ public class AmpiQ {
 
 		int numIt = 30;
 		double gamma = 0.9;
-		int sampleSize = 20000;
+		int sampleSize = 10000;
 		int nrollout = 15;
-		setOutput("ampiq_"+featureSet+"_"+sampleSize+"_"+arg[0]);
+		setOutput("ampiq_"+featureSet.name()+"_"+sampleSize+"_"+arg[0]);
 		UtilAmpi.ActionType  actionType = UtilAmpi.ActionType.ANY;
 		if(arg[0].equals("dom"))
 			actionType = UtilAmpi.ActionType.DOM;
@@ -81,6 +80,9 @@ public class AmpiQ {
 
 
 	public AmpiQ(Game game, FeatureSet featureSet, int maxSim, double gamma, List<Double> beta, int rolloutSetSize, int nRollout, UtilAmpi.ActionType rolloutActionType, Random random) {
+		System.out.println("TetrisBoard:" + TetrisState.height+"x"+TetrisState.width);
+		System.out.println("Sample size:" + rolloutSetSize);
+		System.out.println("Rollout length:" + nRollout);
 		this.game = game;
 		this.featureSet = featureSet;
 		this.numFeatures = game.getFeatureNames(featureSet).size();
@@ -122,7 +124,8 @@ public class AmpiQ {
 
 				List<Double> x = this.game.getFeatureValues(featureSet, state, action);
 				Pair<Object, String> sa = new Pair<>(state, action);
-				double y = RolloutUtil.doRolloutTetris(sa, this.nRollout, game, beta, beta, gamma, featureSet, featureSet, rolloutActionType, random, paretoFeatureSet, paretoWeights);
+//				double y = 0;//// TODO: 10/06/16
+ 				double y = RolloutUtil.doRolloutTetris(sa, this.nRollout, game, beta, beta, gamma, featureSet, featureSet, rolloutActionType, random, paretoFeatureSet, paretoWeights);
 				xs[i] = ArrayUtils.toPrimitive(x.toArray(new Double[x.size()]));
 				ys[i] = y;
 			}
@@ -142,7 +145,7 @@ public class AmpiQ {
 
 			// log
 			System.out.println("****************************");
-			int round = 100;
+			int round = 20;
 			System.out.println(String.format("performance in %s rounds: ", round));
 			double[] betaVector = new double[beta.size()];
 			for (int i = 0; i < betaVector.length; i++) {

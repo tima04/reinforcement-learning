@@ -1,6 +1,7 @@
 package algs;
 
 
+import domains.Action;
 import domains.FeatureSet;
 import domains.Task;
 import domains.tetris.TetrisAction;
@@ -46,11 +47,15 @@ public class Game {
     }
 
 
-    public List<Pair<String, List<Double>>> getStateActionFeatureValues(FeatureSet featureSet, Object state, FeatureSet paretoFeatureSet, double[] paretoWeights) {
+    public List<Pair<String, List<Double>>> getStateActionFeatureValues_(FeatureSet featureSet, Object state, FeatureSet paretoFeatureSet, double[] paretoWeights) {
+        return getStateActionFeatureValues_(featureSet, state, UtilAmpi.ActionType.ANY, paretoFeatureSet, paretoWeights);
+    }
+
+    public List<Pair<Action, List<Double>>> getStateActionFeatureValues(FeatureSet featureSet, Object state, FeatureSet paretoFeatureSet, double[] paretoWeights) {
         return getStateActionFeatureValues(featureSet, state, UtilAmpi.ActionType.ANY, paretoFeatureSet, paretoWeights);
     }
 
-    public List<Pair<String, List<Double>>> getStateActionFeatureValues(FeatureSet featureSet, Object state, UtilAmpi.ActionType actionType, FeatureSet paretoFeatureSet, double[] paretoWeights) {
+    public List<Pair<String, List<Double>>> getStateActionFeatureValues_(FeatureSet featureSet, Object state, UtilAmpi.ActionType actionType, FeatureSet paretoFeatureSet, double[] paretoWeights) {
         TetrisState tState = (TetrisState) state;
         List<Pair<TetrisAction,TetrisFeatures>> actionFeatures = tState.getActionsFeaturesList();
         List<Pair<String, List<Double>>> featureSetValues = actionFeatures
@@ -65,6 +70,28 @@ public class Game {
                 .collect(Collectors.toList());
         boolean[] is_pareto = UtilAmpi.paretoList(featureSetParetoValues, actionType, paretoWeights);
         List<Pair<String, List<Double>>> actionFeaturesReturn = new ArrayList<>();
+        for (int i = 0; i < featureSetValues.size(); i++) {
+            if(is_pareto[i])
+                actionFeaturesReturn.add(featureSetValues.get(i));
+        }
+        return actionFeaturesReturn;
+    }
+
+    public List<Pair<Action, List<Double>>> getStateActionFeatureValues(FeatureSet featureSet, Object state, UtilAmpi.ActionType actionType, FeatureSet paretoFeatureSet, double[] paretoWeights) {
+        TetrisState tState = (TetrisState) state;
+        List<Pair<TetrisAction,TetrisFeatures>> actionFeatures = tState.getActionsFeaturesList();
+        List<Pair<Action, List<Double>>> featureSetValues = actionFeatures
+                .stream()
+                .filter(p -> !p.getSecond().gameOver)
+                .map(p -> new Pair<Action,List<Double>>(p.getFirst(), featureSet.make(p.getSecond())))
+                .collect(Collectors.toList());
+        List<Pair<Action, List<Double>>> featureSetParetoValues = actionFeatures
+                .stream()
+                .filter(p -> !p.getSecond().gameOver)
+                .map(p -> new Pair<Action,List<Double>>(p.getFirst(), paretoFeatureSet.make(p.getSecond())))
+                .collect(Collectors.toList());
+        boolean[] is_pareto = UtilAmpi.paretoList(featureSetParetoValues, actionType, paretoWeights);
+        List<Pair<Action, List<Double>>> actionFeaturesReturn = new ArrayList<>();
         for (int i = 0; i < featureSetValues.size(); i++) {
             if(is_pareto[i])
                 actionFeaturesReturn.add(featureSetValues.get(i));
@@ -104,7 +131,6 @@ public class Game {
             List<Pair<TetrisAction, TetrisFeatures>> actionsWithGameover = state.getActionsFeaturesList();
             List<Pair<TetrisAction, TetrisFeatures>> actions = actionsWithGameover.stream()
                     .filter(p -> !p.getSecond().gameOver).collect(Collectors.toList());
-//
             if(actions.isEmpty()) {
                 state = new TetrisState(random);
                 i++;

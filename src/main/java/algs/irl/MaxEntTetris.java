@@ -2,19 +2,25 @@ package algs.irl;
 
 
 
+import algs.Game;
+import algs.rl.Dpi;
 import algs.rl.ValueIteration;
 import domains.FeatureSet;
 import domains.Features;
 import domains.State;
+import domains.tetris.*;
 import domains.tictactoe.TicTacToe;
 import domains.tictactoe.TicTacToeCustomTask;
 import domains.tictactoe.TicTacToeState;
 import domains.tictactoe.TicTacToeTask;
 import domains.tictactoe.helpers.TicTacToeFeatureSet;
 import domains.tictactoe.helpers.TicTacToeFeatures;
+import models.CustomPolicy;
 import models.Policy;
 import org.apache.commons.math3.util.Pair;
+import policy.LinearPick;
 import util.IrlUtil;
+import util.UtilAmpi;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -23,17 +29,19 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class MaxEnt {
+public class MaxEntTetris {
 
-    static Random random = new Random();
-    
     static double learningRate = 0.01;
-    static int numTrajectories = 1000;
+    static Random random = new Random(2);
+    static int numTrajectories = 100;
+    static int trajectoryLength = 1000;
+    static TetrisFeatureSet rewardFunctionFeatureSet = new TetrisFeatureSet("lagoudakisthierry");
+    static TetrisFeatureSet policyFeatureSet = new TetrisFeatureSet("bcts");
 
     static FeatureSet featureSet = new TicTacToeFeatureSet("all");
 
     public static void main(String[] arg){
-        setOutput("MaxEnt");
+//        setOutput("MaxEnt");
         maxEnt();
     }
 
@@ -46,7 +54,7 @@ public class MaxEnt {
         //file = file + System.currentTimeMillis();
         try {
             System.out.println(fileName);
-            System.setOut(new PrintStream(new File("src/main/resources/irl/tictactoe/maxent/"+fileName)));
+            System.setOut(new PrintStream(new File("src/main/resources/irl/tetris/maxent/"+fileName)));
 //			System.setOut(new PrintStream(new File("scores/ampiq/"+fileName)));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -54,46 +62,42 @@ public class MaxEnt {
     }
 
     private static void maxEnt() {
-        TicTacToe ticTacToe = new TicTacToe();
-        List<State> states = ticTacToe.states().stream().collect(Collectors.<State>toList());
-        System.out.println(states.size());
-        ValueIteration valueIteration = new ValueIteration(states, ticTacToe, new TicTacToeTask(0.9), random);
-        valueIteration.computeOptimalV();
-        valueIteration.computeQFactors();
-        Policy optimalPolicy = valueIteration.computeOptimalPolicy();
-        Policy randomPolicy = valueIteration.createRandomPolicy();
+        List<Double> weights = new ArrayList<>();
+        weights.add(-13.08);
+        weights.add(-19.77);
+        weights.add(-9.22);
+        weights.add(-10.49);
+        weights.add( 6.60);
+        weights.add(-12.63);
+        weights.add(-24.04);
+        weights.add(-1.61);
 
-        List<List<Pair<State, Features>>> optimalTrajectories = IrlUtil.getTrajectories(numTrajectories, new TicTacToeState(), optimalPolicy, new TicTacToeTask(0.9), random);
-        List<List<Pair<State, Features>>> trajectories = IrlUtil.getTrajectories(numTrajectories, new TicTacToeState(), randomPolicy, new TicTacToeTask(0.9), random);
+        Policy optimalPolicy = new CustomPolicy(new LinearPick(weights, policyFeatureSet, random), new TetrisTaskLines(0.9));
 
-        List<Double> fe = IrlUtil.calculateFeatureExpectations(trajectories, 0.9, featureSet);
-        List<Double> ofe = IrlUtil.calculateFeatureExpectations(optimalTrajectories, 0.9, featureSet);
-        double performance = calculatePerformance(optimalTrajectories);
-        System.out.println("Optimal_Performance," + performance);
-        performance = calculatePerformance(trajectories);
-        System.out.println("0,Performance," + performance);
+        List<Double> randWeights = new ArrayList<>();
+        for (int i = 0; i < 8; i++)
+            randWeights.add(random.nextGaussian());
+
+        Policy randomPolicy = new CustomPolicy(new LinearPick(randWeights, policyFeatureSet, random), new TetrisTaskLines(0.9));
+
+        System.out.println("getting demonstrated trajectories . . .");
+        List<List<Pair<State, Features>>> demonstratedTrajectories = IrlUtil.getTrajectories(numTrajectories, new TetrisState(random), optimalPolicy, new TetrisTruncatedTaskLines(0.9, trajectoryLength, random), random);
+
+        System.out.println("calculating feature expectations . . .");
+        List<Double> ofe = IrlUtil.calculateFeatureExpectations(demonstratedTrajectories, 0.9, rewardFunctionFeatureSet);
+
+
+        List<List<Pair<State, Features>>> trajectories = IrlUtil.getTrajectories(numTrajectories, new TetrisState(random), randomPolicy, new TetrisTruncatedTaskLines(0.9, trajectoryLength, random), random);
+        List<Double> fe = IrlUtil.calculateFeatureExpectations(trajectories, 0.9, rewardFunctionFeatureSet);
 
         List<Double> rewardFunction = new ArrayList<>();
-        for (int i = 0; i < fe.size(); i++)
+        for (int i = 0; i < ofe.size(); i++)
             rewardFunction.add(0.);
 
         //We calculate steady state distribution of random policy * features. See Ziebart 2008 Learning from Demonstrated Behavior
-        List<Double> df = new ArrayList<>();
-        for (int i = 0; i < fe.size(); i++)
-            df.add(0.);
-
-        List<Double> steadyState = empiricalSteadyStateVector(trajectories, states);
-        for (int i = 0; i < states.size(); i++) {
-            TicTacToeFeatures tf = ((TicTacToeState) states.get(i)).ticTacToeFeatures;
-            List<Double> features = featureSet.make( tf);
-            for (int j = 0; j < features.size(); j++) {
-                df.set(j, df.get(j) + steadyState.get(i) * features.get(j));
-            }
-        }
-
         List<Double> gradient = new ArrayList<>();
         for (int i = 0; i < ofe.size(); i++) {
-            gradient.add(ofe.get(i) - df.get(i));
+            gradient.add(ofe.get(i) - fe.get(i));
         }
 
         for (int i = 0; i < rewardFunction.size(); i++)
@@ -103,30 +107,11 @@ public class MaxEnt {
         for (int i = 1; i <= 15; i++) {
             System.out.println("********** iteration: "+ i);
 
-            valueIteration = new ValueIteration(states, ticTacToe, new TicTacToeCustomTask(0.9, rewardFunction, featureSet), random);
-            valueIteration.computeOptimalV();
-            valueIteration.computeQFactors();
-            randomPolicy = valueIteration.computeOptimalPolicy();
-            trajectories = IrlUtil.getTrajectories(numTrajectories, new TicTacToeState(), randomPolicy, new TicTacToeTask(0.9), random);
-            performance = calculatePerformance(trajectories);
-            System.out.println(i+",Performance," + performance);
-            System.out.println("Distance from optimal policy: " +policyDifferences(randomPolicy, optimalPolicy, states));
-            fe = IrlUtil.calculateFeatureExpectations(trajectories, 0.9, featureSet);
+            trajectories = IrlUtil.getTrajectories(numTrajectories, new TetrisState(random), randomPolicy, new TetrisTruncatedTaskLines(0.9, trajectoryLength, random), random);
+            fe = IrlUtil.calculateFeatureExpectations(trajectories, 0.9, rewardFunctionFeatureSet);
+
 
             //We calculate steady state distribution of random policy * features. See Ziebart 2008 Learning from Demonstrated Behavior
-            df = new ArrayList<>();
-            for (int j = 0; j < fe.size(); j++)
-                df.add(0.);
-
-            steadyState = empiricalSteadyStateVector(trajectories, states);
-            for (int j = 0; j < states.size(); j++) {
-                TicTacToeFeatures tf = ((TicTacToeState) states.get(j)).ticTacToeFeatures;
-                List<Double> features = featureSet.make(tf);
-                for (int k = 0; k < features.size(); k++) {
-                    df.set(k, df.get(k) + steadyState.get(j) * features.get(k));
-                }
-            }
-
             gradient = new ArrayList<>();
             for (int j = 0; j < ofe.size(); j++) {
                 gradient.add(ofe.get(j) - fe.get(j));
@@ -136,11 +121,36 @@ public class MaxEnt {
                 rewardFunction.set(j, rewardFunction.get(j) + learningRate * gradient.get(j));
 
             //print reward:
-            System.out.println(rewardFunction);
+            for (int j = 0; j < rewardFunctionFeatureSet.featureNames().size(); j++)
+                System.out.println(rewardFunctionFeatureSet.featureNames().get(j) + ": " + rewardFunction.get(j));
+
+            randomPolicy = getNearOptimalPolicy(rewardFunction);
         }
 
     }
 
+    private static Policy getNearOptimalPolicy(List<Double> rewardFunction) {
+
+        List<Double> initWeightsDpi = new ArrayList<>();
+        for (String s : policyFeatureSet.featureNames())
+            initWeightsDpi.add(0.);
+
+
+        System.out.println("Running DPI");
+        Dpi dpi = new Dpi(new Game(random, new TetrisCustomTask(0.9, rewardFunction, rewardFunctionFeatureSet, random)),
+                policyFeatureSet,
+                2,
+                5000,
+                10,
+                0.9,
+                initWeightsDpi,
+                UtilAmpi.ActionType.ANY,
+                random);
+
+        List<Double> weights = dpi.iterate();
+        System.out.println("DPI done");
+        return new CustomPolicy(new LinearPick(weights, policyFeatureSet, random), new TetrisTaskLines(0.9));
+    }
 
 
     /**

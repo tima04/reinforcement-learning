@@ -13,6 +13,8 @@ import java.util.stream.Collectors;
 
 public class UtilAmpi {
 
+
+
 	public enum ActionType{
 		ANY,
 		DOM,
@@ -66,6 +68,22 @@ public static double l2norm(double[] xs) {
 	return Math.sqrt(norm);
 }
 
+public static double l2norm(List<Double> xs) {
+	double norm = 0;
+	for (int i = 0; i < xs.size(); i++)
+		norm += xs.get(i) * xs.get(i);
+
+	return Math.sqrt(norm);
+}
+
+public static List<Double> normalize(List<Double> vector) {
+	double norm = l2norm(vector);
+	List<Double> normalized = new ArrayList<>();
+	for (Double aDouble : vector)
+		normalized.add(aDouble/norm);
+
+	return normalized;
+}
 public static double dist(List<Double> xs, List<Double> ys) {
 	assert xs.size() == ys.size();
 	double rslt = 0.;

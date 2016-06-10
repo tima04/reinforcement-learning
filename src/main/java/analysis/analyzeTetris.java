@@ -3,6 +3,7 @@ package analysis;
 import domains.FeatureSet;
 import domains.tetris.TetrisAction;
 import domains.tetris.TetrisFeatureSet;
+import domains.tetris.TetrisParameters;
 import domains.tetris.TetrisState;
 import org.apache.commons.math3.util.Pair;
 import util.ReservoirSample;
@@ -22,31 +23,43 @@ public class analyzeTetris {
     static String path = "src/main/resources/tetris/rawGames/bcts/";
     static String suffix = "Bcts";
     static int numSamples = 10000;
+    static int height = 16;
+    static int width = 10;
 //  Make sure board is 16 by 10
 
 //    static String path = "src/main/resources/tetris/rawGames/random/";
 //    static String suffix = "Random";
 //    static int numSamples = 200000;
+//    static int height = 16;
+//    static int width = 10;
 ////  Make sure board is 16 by 10
 
 //    static String path = "src/main/resources/tetris/rawGames/random_board/";
 //    static String suffix = "RandomBoard";
 //    static int numSamples = 200000;
+    //    static int height = 16;
+//    static int width = 10;
 ////  Make sure board is 16 by 10
 
 //    static String path = "src/main/resources/tetris/rawGames/dom/";
 //    static String suffix = "Dom";
 //    static int numSamples = 200000;
+    //    static int height = 16;
+//    static int width = 10;
 //////  Make sure board is 16 by 10
 
 //    static String path = "src/main/resources/tetris/rawGames/cum/";
 //    static String suffix = "Cumdom";
 //    static int numSamples = 200000;
+    //    static int height = 16;
+//    static int width = 10;
 ////  Make sure board is 16 by 10
 
 //    static String path = "src/main/resources/tetris/rawGames/people/";
 //    static String suffix = "AllPeople";
 //    static int numSamples = 200000;
+    //    static int height = 20;
+//    static int width = 10;
 ////Make sure board is 20 by 10
 
     static String outpath = "src/main/resources/tetris/data/";
@@ -54,6 +67,7 @@ public class analyzeTetris {
     static Random random = new Random(1);
 
     public static void main(String[] arg){
+        TetrisParameters.getInstance().setSize(height, width);
         File dir = new File(path);
         List<Analysis> analysisList = initAnalysis(suffix);
         for (File file : dir.listFiles()) {

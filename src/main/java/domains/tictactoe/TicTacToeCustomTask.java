@@ -6,8 +6,6 @@ import domains.Action;
 import domains.FeatureSet;
 import domains.State;
 import domains.Task;
-import domains.tictactoe.helpers.TicTacToeFeatureSet;
-import util.Compute;
 import util.UtilAmpi;
 
 import java.util.List;

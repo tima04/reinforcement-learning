@@ -34,6 +34,7 @@ public class TetrisLagoudakisThierryFeaturesTest {
 
     @Before
     public void setUp(){
+        TetrisParameters.getInstance().setSize(16, 10);
         loadListsLagoudakisThierry();
     }
 

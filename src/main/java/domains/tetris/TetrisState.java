@@ -15,7 +15,7 @@ import static domains.tetris.Tetromino.pieces;
 public class TetrisState implements State {
 
     boolean[][] board;
-    public static final int height = 10, width = 10, matHeight = height + 4;
+    public static final int height = TetrisParameters.getInstance().height(), width = TetrisParameters.getInstance().width(), matHeight = height + 4;
     Tetromino piece;
     public TetrisFeatures features;
     String stringKey;
@@ -97,6 +97,9 @@ public class TetrisState implements State {
         return rslt;
     }
 
+    public void nextState(Action action, Random random) {
+        nextState(((TetrisAction)action).col, ((TetrisAction)action).rot, random);
+    }
 
     /**
      * Changes the state for the one resulting after placing the rotated piece on the given column.
@@ -451,6 +454,7 @@ public class TetrisState implements State {
     public Features features() {
         return features;
     }
+
 
 
 }

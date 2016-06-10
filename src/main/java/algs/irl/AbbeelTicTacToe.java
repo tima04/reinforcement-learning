@@ -13,6 +13,7 @@ import domains.tictactoe.TicTacToeTask;
 import domains.tictactoe.helpers.TicTacToeFeatureSet;
 import domains.tictactoe.helpers.TicTacToeFeatures;
 import libsvm.LibSVM;
+import libsvm.svm_parameter;
 import lpsolve.LpSolve;
 import models.Policy;
 import net.sf.javaml.core.Dataset;
@@ -22,6 +23,7 @@ import net.sf.javaml.core.Instance;
 import org.apache.commons.math3.util.Pair;
 import util.IrlUtil;
 import util.LpSolveUtil;
+import util.UtilAmpi;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -245,7 +247,6 @@ public class AbbeelTicTacToe {
         List<List<Pair<State, Features>>> optimalTrajectories = IrlUtil.getTrajectories(numTrajectories, new TicTacToeState(), optimalPolicy, new TicTacToeTask(0.9), random);
         List<List<Pair<State, Features>>> trajectories = IrlUtil.getTrajectories(numTrajectories, new TicTacToeState(), randomPolicy, new TicTacToeTask(0.9), random);
 
-        List<Double> fe = IrlUtil.calculateFeatureExpectations(trajectories, 0.9, featureSetClass);
         List<Double> ofe = IrlUtil.calculateFeatureExpectations(optimalTrajectories, 0.9, featureSetClass);
         double performance = calculatePerformance(optimalTrajectories);
         System.out.println("Optimal_Performance," + performance);
@@ -268,11 +269,11 @@ public class AbbeelTicTacToe {
             rewardFunction.add(0.);
 
         for (int i = 0; i < 30; i++) {
-
-            trajectories = IrlUtil.getTrajectories(numTrajectories, new TicTacToeState(), randomPolicy, new TicTacToeCustomTask(0.9, rewardFunction, featureSetClass), random);
-            fe = IrlUtil.calculateFeatureExpectations(trajectories, 0.9, featureSetClass);
+            performance = calculatePerformance(trajectories);
+            System.out.println("0,Performance," + performance);
+            List<Double> fe = IrlUtil.calculateFeatureExpectations(trajectories, 0.9, featureSetClass);
             double[] valuesFe = new double[fe.size()];
-            for (int j = 0; i < fe.size(); i++)
+            for (int j = 0; j < fe.size(); j++)
                 valuesFe[j] = fe.get(j);
 
             instance.setClassValue(0);
@@ -282,21 +283,33 @@ public class AbbeelTicTacToe {
 
             LibSVM svm = new LibSVM();
             try {
-//                svm_parameter par = new svm_parameter();
-//                par.kernel_type = svm_parameter.LINEAR;
-                ;//set kernel to linear
-//                svm.setParameters(par);
-                svm.buildClassifier(instances);
-                System.out.println("weights");
-                for (double v : svm.getWeights()) {
-                    System.out.println(v);
-                }
 
-                // TODO: 08/06/16 find weights and use them to update reward function.
+                svm_parameter par = svm.getParameters();
+                par.kernel_type = svm_parameter.LINEAR;//set kernel to linear
+                svm.setParameters(par);
+                svm.buildClassifier(instances);
+                System.out.println("******* weights *******");
+                rewardFunction = new ArrayList<>();
+                double[] weights = svm.getWeights();
+                for (int j = 0; j < weights.length; j++)
+                    rewardFunction.add(weights[j]);
+
+                rewardFunction = UtilAmpi.normalize(rewardFunction);
+
+                for (int j = 0; j < rewardFunction.size(); j++)
+                    System.out.println(featureSetClass.featureNames().get(j)+":"+ rewardFunction.get(j));
+
+                System.out.println("*************");
 
             } catch (Exception e) {
                 e.printStackTrace();
             }
+
+            valueIteration = new ValueIteration(states, ticTacToe, new TicTacToeCustomTask(0.9, rewardFunction, featureSetClass), random);
+            valueIteration.computeOptimalV();
+            valueIteration.computeQFactors();
+            randomPolicy = valueIteration.computeOptimalPolicy();
+            trajectories = IrlUtil.getTrajectories(numTrajectories, new TicTacToeState(), randomPolicy, new TicTacToeCustomTask(0.9, rewardFunction, featureSetClass), random);
         }
     }
 
