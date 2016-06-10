@@ -23,7 +23,9 @@ dependencies {
 
 
 	// example of adding local files and jars.
- 	 //compile files("~/.local/lib/jars/burlap_v1.jar")
+       compile files("src/main/resources/lib/cmaes.jar")
+       compile files("src/main/resources/lib/javaml-0.1.7.jar")
+	compile files("src/main/resources/lib/libsvm.jar")
      //compile fileTree(dir: 'lib', include: ['*.jar']) //will include all jars in lib/
 		
     // Declare the dependency for your favourite test framework you want to use in your tests.
