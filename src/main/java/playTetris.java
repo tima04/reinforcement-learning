@@ -3,6 +3,7 @@ import domains.Action;
 import domains.Features;
 import domains.Task;
 import domains.tetris.*;
+import domains.tetris.helpers.ApproximateDominanceSpec;
 import org.apache.commons.math3.util.Pair;
 import policy.*;
 import util.UtilAmpi;
@@ -16,14 +17,15 @@ public class playTetris {
 
     public static void main(String[] args) {
         List<Double> weights = new ArrayList<>();
-        weights.add(-13.08);
-        weights.add(-19.77);
-        weights.add(-9.22);
-        weights.add(-10.49);
-        weights.add( 6.60);
-        weights.add(-12.63);
-        weights.add(-24.04);
-        weights.add(-1.61);
+//        weights.add(-13.08);
+//        weights.add(-19.77);
+//        weights.add(-9.22);
+//        weights.add(-10.49);
+//        weights.add( 6.60);
+//        weights.add(-12.63);
+//        weights.add(-24.04);
+//        weights.add(-1.61);
+
 
         double[] paretoWeights = new double[]{-5, -6, -2, -3, 1, -4, -7, -1}; //It should have the same effect as bcts since the direction and order are the same.
         int[] paretoSigns = new int[]{-1, -1, -1, -1, 1, -1, -1, -1};
@@ -34,20 +36,43 @@ public class playTetris {
                 cueGroups.add(Arrays.asList(0,2,4,7));
 
         TetrisParameters.getInstance().setSize(10,10);
-//          playGames(10000, new SingleCueTallyRest(paretoSigns, 6, new TetrisFeatureSet("bcts"), random), random);
-//        playGames(1, new LinearPick(weights, new TetrisFeatureSet("bcts"), random), random);
-        playSteps(10000, new LinearPick(weights, new TetrisFeatureSet("bcts"), random), random);
+
+
+//        Pair<List<Integer>, List<Integer>> apprDominanceSpec = ApproximateDominanceSpec.get(0.95);
+//        playGames(100, new ParetoAppr(paretoWeights, new TetrisFeatureSet("bcts"), UtilAmpi.ActionType.CUMDOM, apprDominanceSpec.getFirst(), apprDominanceSpec.getSecond(), random), random,
+//                "apprcumdom0.95.txt");
+//        apprDominanceSpec = ApproximateDominanceSpec.get(0.98);
+//        playGames(100, new ParetoAppr(paretoWeights, new TetrisFeatureSet("bcts"), UtilAmpi.ActionType.CUMDOM, apprDominanceSpec.getFirst(), apprDominanceSpec.getSecond(), random), random,
+//                "apprcumdom0.98.txt");
+//        apprDominanceSpec = ApproximateDominanceSpec.get(0.99);
+//        playGames(100, new ParetoAppr(paretoWeights, new TetrisFeatureSet("bcts"), UtilAmpi.ActionType.CUMDOM, apprDominanceSpec.getFirst(), apprDominanceSpec.getSecond(), random), random,
+//                "apprcumdom0.99.txt");
+//
+//        apprDominanceSpec = ApproximateDominanceSpec.get(0.95);
+//        playGames(100, new ParetoAppr(paretoWeights, new TetrisFeatureSet("bcts"), UtilAmpi.ActionType.DOM, apprDominanceSpec.getFirst(), apprDominanceSpec.getSecond(), random), random,
+//                "apprdom0.95.txt");
+//        apprDominanceSpec = ApproximateDominanceSpec.get(0.98);
+//        playGames(100, new ParetoAppr(paretoWeights, new TetrisFeatureSet("bcts"), UtilAmpi.ActionType.DOM, apprDominanceSpec.getFirst(), apprDominanceSpec.getSecond(), random), random,
+//                "apprdom0.98.txt");
+//        apprDominanceSpec = ApproximateDominanceSpec.get(0.99);
+//        playGames(100, new ParetoAppr(paretoWeights, new TetrisFeatureSet("bcts"), UtilAmpi.ActionType.DOM, apprDominanceSpec.getFirst(), apprDominanceSpec.getSecond(), random), random,
+//                "apprdom0.99.txt");
+
+
+//        playGames(10000, new SingleCueTallyRest(paretoSigns, 6, new TetrisFeatureSet("bcts"), random), random);
+        playGames(100, new LinearPick(weights, new TetrisFeatureSet("thierry"), random), random, "");
+//        playSteps(10000, new LinearPick(weights, new TetrisFeatureSet("bcts"), random), random);
 //        playGames(10, new MultiPareto(paretoWeights, new TetrisFeatureSet("bcts"), random), cueGroups, UtilAmpi.ActionType.CUMDOM, random), random);
 //        playGames(1000, new SingleCue(-1, 6, new TetrisFeatureSet("bcts"), random), 3, random, new TetrisTaskLines(0.9)), random);
 
     }
 
-    private static void playGames(int numGames, PickAction pickAction, Random random) {
+    private static void playGames(int numGames, PickAction pickAction, Random random, String scoreReportName) {
 
         Task task = new TetrisTaskLines(0.9);
         int totalScore = 0;
         int steps = 0;
-        GeneralReport scoreReport = new GeneralReport(path + "tetris/scores/policy/singlecue_tallyrest.txt");
+        GeneralReport scoreReport = new GeneralReport(path + "tetris/scores/policy/" + scoreReportName);
         scoreReport.addLine("game,score,steps");
         for (int game = 0; game < numGames; game++) {
             int score = 0;
@@ -77,7 +102,6 @@ public class playTetris {
                 score += state.features.nClearedLines;
             }
             scoreReport.addLine(game+","+score+","+steps);
-//            scoreReport.addLine(score+"");
 //            System.out.println("_____________");
             System.out.println("lines cleared: "+score);
             totalScore = totalScore + score;

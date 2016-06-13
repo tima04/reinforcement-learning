@@ -1,6 +1,7 @@
 package algs.rl;
 
 import algs.Game;
+import domains.Action;
 import domains.FeatureSet;
 import domains.tetris.*;
 import org.apache.commons.lang3.ArrayUtils;
@@ -83,6 +84,7 @@ public class AmpiQ {
 		System.out.println("TetrisBoard:" + TetrisState.height+"x"+TetrisState.width);
 		System.out.println("Sample size:" + rolloutSetSize);
 		System.out.println("Rollout length:" + nRollout);
+		System.out.println("rollout iterative");
 		this.game = game;
 		this.featureSet = featureSet;
 		this.numFeatures = game.getFeatureNames(featureSet).size();
@@ -119,13 +121,12 @@ public class AmpiQ {
 
 			for (int i = 0; i < this.rolloutSet.size(); i++) {
 				Object state = this.rolloutSet.get(i);
-				List<String> actions =  game.getActionsIncludingGameover(state, this.rolloutActionType, featureSet, paretoFeatureSet, paretoWeights);
-				String action = UtilAmpi.randomChoice(actions, random);
+				List<Action> actions =  game.getActionsIncludingGameover(state, this.rolloutActionType, featureSet, paretoFeatureSet, paretoWeights);
+				Action action = UtilAmpi.randomChoice(actions, random);
 
 				List<Double> x = this.game.getFeatureValues(featureSet, state, action);
-				Pair<Object, String> sa = new Pair<>(state, action);
-//				double y = 0;//// TODO: 10/06/16
- 				double y = RolloutUtil.doRolloutTetris(sa, this.nRollout, game, beta, beta, gamma, featureSet, featureSet, rolloutActionType, random, paretoFeatureSet, paretoWeights);
+				Pair<Object, Action> sa = new Pair<>(state, action);
+ 				double y = RolloutUtil.doRolloutTetrisIterative(sa, this.nRollout, beta, beta, gamma, featureSet, featureSet, random);
 				xs[i] = ArrayUtils.toPrimitive(x.toArray(new Double[x.size()]));
 				ys[i] = y;
 			}

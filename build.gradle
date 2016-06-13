@@ -16,8 +16,9 @@ repositories {
 dependencies {
 
   	compile 'org.apache.commons:commons-lang3:3.0'
-    	compile 'commons-lang:commons-lang:2.6'
+    compile 'commons-lang:commons-lang:2.6'
 	compile 'org.apache.commons:commons-math3:3.6.1'
+    compile 'com.joptimizer:joptimizer:3.5.1'
 	compile group: 'com.datumbox', name: 'lpsolve', version: '5.5.2.0'
 
 
@@ -50,6 +51,8 @@ compileJava {
 
 task fatJar(type: Jar) {
     baseName = project.name + '-all'
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }{}
+    exclude ('*tetris')
     with jar
 }
+

@@ -31,6 +31,7 @@ public class AbbeelTetris {
 
     public static void main(String[] arg){
 
+        TetrisParameters.getInstance().setSize(16, 10);
 //        Ng2000();
         constraintPerPolicy();
 
@@ -108,7 +109,7 @@ public class AbbeelTetris {
             System.out.println("**************");
             System.out.println("Inferred reward function:");
             for (int j = 0; j < rewardFunction.size(); j++)
-                System.out.println(names.get(j)+":"+rewardFunction.get(j));
+                System.out.println(i+","+names.get(j)+","+rewardFunction.get(j));
 
             System.out.println("");
             randomPolicy = getNearOptimalPolicy(rewardFunction);
@@ -127,7 +128,7 @@ public class AbbeelTetris {
                         policyFeatureSet,
                         2,
                         5000,
-                        10,
+                        5,
                         0.9,
                         initWeightsDpi,
                         UtilAmpi.ActionType.ANY,

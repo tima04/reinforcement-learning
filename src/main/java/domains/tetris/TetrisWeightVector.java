@@ -16,6 +16,16 @@ public class TetrisWeightVector {
             weights.add(-12.63);
             weights.add(-24.04);
             weights.add(-1.61);
+        }else if(name.equals("DT10")){
+            weights.add(-2.18);
+            weights.add(2.42);
+            weights.add(-2.17);
+            weights.add(-3.31);
+            weights.add( 0.95);
+            weights.add(-2.22);
+            weights.add(-0.81);
+            weights.add(-9.65);
+            weights.add(1.27);
         }
         return weights;
     }

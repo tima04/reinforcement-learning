@@ -142,10 +142,12 @@ public class TetrisFeatures implements Features {
 		//(lh(rh) is left(right) column height)
 		//If the pattern is higher than 2, it is ignored.
 		Set<Integer> patterns = new HashSet<>();
-		for (int i = 0; i < this.width -1; i++)
-			if(!patterns.contains(colHeights[i] - colHeights[i+1]) && Math.abs(colHeights[i] - colHeights[i+1]) <= 2)
-				patterns.add(colHeights[i] - colHeights[i+1]);
+		for (int i = 0; i < this.width -1; i++) {
+			int pat = colHeights[i] - colHeights[i + 1];
+			if (!patterns.contains(pat) && Math.abs(pat) <= 2)
+				patterns.add(pat);
 
+		}
 		return patterns.size();
 	}
 

@@ -1,5 +1,7 @@
 package util;
 
+import java.util.List;
+
 public class LinearDecisionRule {
 
 
@@ -164,6 +166,7 @@ public class LinearDecisionRule {
     }
 
 
+    // this method returns whether values1 are better in at least betterIn and worse in maximum worseIn features.
     public static boolean exhibitsApproximateDominance(double[] weights, double[] values1, double[] values2,
                                                        int betterIn, int worseIn) {
         if(exhibitsDominance(weights, values1, values2)){
@@ -292,8 +295,32 @@ public class LinearDecisionRule {
         return pareto;
     }
 
+    //the objects in the set are the ones that are not approximately dominated by any other.
+    public static boolean[] paretoDominanceApprSet(double[] weights, double[][] objects, List<Integer> betterIn, List<Integer> worseIn){
+        assert betterIn.size() == worseIn.size();
+        boolean[] pareto = new boolean[objects.length];
+        for (int i = 0; i < pareto.length; i++) {
+            pareto[i] = true;
+        }
+        for (int i = 0; i < objects.length; i++) {
+            for (int j = 0; j < objects.length; j++) {
+                double[] featuresValuesI = objects[i];
+                double[] featuresValuesJ = objects[j];
+                for (int k = 0; k < betterIn.size(); k++) {
+                    if(exhibitsApproximateDominance(weights, featuresValuesI, featuresValuesJ, betterIn.get(k), worseIn.get(k))){
+                        pareto[j] = false;
+                    }else if(exhibitsApproximateDominance(weights, featuresValuesJ, featuresValuesI, betterIn.get(k), worseIn.get(k))){
+                        pareto[i] = false;
+                    }
+                }
+            }
+        }
+        return pareto;
+    }
+
     //the objects in the set are the ones that are not approximately cumulatively dominated by any other.
-    public static boolean[] paretoCumDominanceApprSet(double[] weights, double[][] objects, int betterIn, int worseIn){
+    public static boolean[] paretoCumDominanceApprSet(double[] weights, double[][] objects, List<Integer> betterIn, List<Integer> worseIn){
+        assert betterIn.size() == worseIn.size();
         boolean[] pareto = new boolean[objects.length];
         for (int i = 0; i < pareto.length; i++) {
             pareto[i] = true;
@@ -303,10 +330,12 @@ public class LinearDecisionRule {
                 if(pareto[i] && pareto[j]){
                     double[] featuresValuesI = objects[i];
                     double[] featuresValuesJ = objects[j];
-                    if(exhibitsApproximateCumulativeDominance(weights, featuresValuesI, featuresValuesJ, betterIn, worseIn)){
-                        pareto[j] = false;
-                    }else if(exhibitsApproximateCumulativeDominance(weights, featuresValuesJ, featuresValuesI, betterIn, worseIn)){
-                        pareto[i] = false;
+                    for (int k = 0; k < betterIn.size(); k++) {
+                        if (exhibitsApproximateCumulativeDominance(weights, featuresValuesI, featuresValuesJ, betterIn.get(k), worseIn.get(k))) {
+                            pareto[j] = false;
+                        } else if (exhibitsApproximateCumulativeDominance(weights, featuresValuesJ, featuresValuesI, betterIn.get(k), worseIn.get(k))) {
+                            pareto[i] = false;
+                        }
                     }
                 }
             }

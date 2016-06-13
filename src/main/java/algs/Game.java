@@ -35,12 +35,12 @@ public class Game {
         return featureSet.make(tState.features);
     }
 
-    public List<Double> getFeatureValues(FeatureSet featureSet, Object state, String action) {
+    public List<Double> getFeatureValues(FeatureSet featureSet, Object state, Action action) {
         TetrisState tState = (TetrisState) state;
         List<Pair<TetrisAction,TetrisFeatures>> actionFeatures = tState.getActionsFeaturesList();
 
         for (Pair<TetrisAction,TetrisFeatures> actionFeature : actionFeatures)
-            if( actionFeature.getFirst().name().equals(action))
+            if( actionFeature.getFirst().equals(action))
                 return featureSet.make(actionFeature.getSecond());
 
         return new ArrayList<>();
@@ -99,7 +99,7 @@ public class Game {
         return actionFeaturesReturn;
     }
 
-    public List<Pair<String, List<Double>>> getStateActionFeatureValuesIncludingGameover(FeatureSet featureSet, Object state, UtilAmpi.ActionType actionType, FeatureSet paretoFeatureSet, double[] paretoWeights) {
+    public List<Pair<String, List<Double>>> getStateActionFeatureValuesIncludingGameover_(FeatureSet featureSet, Object state, UtilAmpi.ActionType actionType, FeatureSet paretoFeatureSet, double[] paretoWeights) {
         TetrisState tState = (TetrisState) state;
         List<Pair<TetrisAction,TetrisFeatures>> actionFeatures = tState.getActionsFeaturesList();
         List<Pair<String, List<Double>>> featureSetValues = actionFeatures
@@ -119,6 +119,27 @@ public class Game {
         return actionFeaturesReturn;
     }
 
+
+    public List<Pair<Action, List<Double>>> getStateActionFeatureValuesIncludingGameover(FeatureSet featureSet, Object state, UtilAmpi.ActionType actionType, FeatureSet paretoFeatureSet, double[] paretoWeights) {
+        TetrisState tState = (TetrisState) state;
+        List<Pair<TetrisAction,TetrisFeatures>> actionFeatures = tState.getActionsFeaturesList();
+        List<Pair<Action, List<Double>>> featureSetValues = actionFeatures
+                .stream()
+                .map(p -> new Pair<Action,List<Double>>(p.getFirst(), featureSet.make(p.getSecond())))
+                .collect(Collectors.toList());
+        List<Pair<Action, List<Double>>> featureSetParetoValues = actionFeatures
+                .stream()
+                .map(p -> new Pair<Action,List<Double>>(p.getFirst(), paretoFeatureSet.make(p.getSecond())))
+                .collect(Collectors.toList());
+        boolean[] is_pareto = UtilAmpi.paretoList(featureSetParetoValues, actionType, paretoWeights);
+        List<Pair<Action, List<Double>>> actionFeaturesReturn = new ArrayList<>();
+        for (int i = 0; i < actionFeatures.size(); i++) {
+            if(is_pareto[i])
+                actionFeaturesReturn.add(featureSetValues.get(i));
+        }
+        return actionFeaturesReturn;
+    }
+
     public List<String> getFeatureNames(FeatureSet featureSet) {
         return featureSet.featureNames();
     }
@@ -131,6 +152,7 @@ public class Game {
             List<Pair<TetrisAction, TetrisFeatures>> actionsWithGameover = state.getActionsFeaturesList();
             List<Pair<TetrisAction, TetrisFeatures>> actions = actionsWithGameover.stream()
                     .filter(p -> !p.getSecond().gameOver).collect(Collectors.toList());
+//            List<Pair<TetrisAction, TetrisFeatures>> actions = actionsWithGameover;
             if(actions.isEmpty()) {
                 state = new TetrisState(random);
                 i++;
@@ -235,10 +257,10 @@ public class Game {
     }
 
 
-    public List<String> getActionsIncludingGameover(Object state, UtilAmpi.ActionType actionType, FeatureSet featureSet, FeatureSet paretoFeatureSet, double[] paretoWeights) {
-        List<Pair<String, List<Double>>> actionFeatures = getStateActionFeatureValuesIncludingGameover(featureSet, state, actionType, paretoFeatureSet, paretoWeights);
-        List<String> actions = new ArrayList<>();
-        for (Pair<String, List<Double>> actionFeaturesPair : actionFeatures)
+    public List<Action> getActionsIncludingGameover(Object state, UtilAmpi.ActionType actionType, FeatureSet featureSet, FeatureSet paretoFeatureSet, double[] paretoWeights) {
+        List<Pair<Action, List<Double>>> actionFeatures = getStateActionFeatureValuesIncludingGameover(featureSet, state, actionType, paretoFeatureSet, paretoWeights);
+        List<Action> actions = new ArrayList<>();
+        for (Pair<Action, List<Double>> actionFeaturesPair : actionFeatures)
             actions.add(actionFeaturesPair.getFirst());
 
         return actions;

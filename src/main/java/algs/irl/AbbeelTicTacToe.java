@@ -3,6 +3,11 @@ package algs.irl;
 
 
 import algs.rl.ValueIteration;
+import com.joptimizer.functions.ConvexMultivariateRealFunction;
+import com.joptimizer.functions.LinearMultivariateRealFunction;
+import com.joptimizer.functions.PDQuadraticMultivariateRealFunction;
+import com.joptimizer.optimizers.JOptimizer;
+import com.joptimizer.optimizers.OptimizationRequest;
 import domains.FeatureSet;
 import domains.Features;
 import domains.State;
@@ -23,6 +28,7 @@ import net.sf.javaml.core.Instance;
 import org.apache.commons.math3.util.Pair;
 import util.IrlUtil;
 import util.LpSolveUtil;
+import util.QpSolveUtil;
 import util.UtilAmpi;
 
 import java.io.File;
@@ -47,7 +53,8 @@ public class AbbeelTicTacToe {
 //        setOutput("abbeel");
 //        constraintPerPolicy();
 //        abbeel2004();
-        abbeel2004svm();
+//        abbeel2004svm();
+        abbeel2004QP();
     }
 
     private static void setOutput(String fileName) {
@@ -145,7 +152,86 @@ public class AbbeelTicTacToe {
             System.out.println("**************");
             System.out.println("Inferred reward function:");
             for (int j = 0; j < rewardFunction.size(); j++)
-                System.out.println(names.get(j)+":"+rewardFunction.get(j));
+                System.out.println(i+","+names.get(j)+","+rewardFunction.get(j));
+        }
+    }
+
+    private static void abbeel2004QP() {
+        TicTacToe ticTacToe = new TicTacToe();
+        List<State> states = ticTacToe.states().stream().collect(Collectors.<State>toList());
+        System.out.println(states.size());
+        ValueIteration valueIteration = new ValueIteration(states, ticTacToe, new TicTacToeTask(0.9), random);
+        valueIteration.computeOptimalV();
+        valueIteration.computeQFactors();
+        Policy optimalPolicy = valueIteration.computeOptimalPolicy();
+        Policy randomPolicy = valueIteration.createRandomPolicy();
+
+        List<List<Pair<State, Features>>> optimalTrajectories = IrlUtil.getTrajectories(numTrajectories, new TicTacToeState(), optimalPolicy, new TicTacToeTask(0.9), random);
+        List<List<Pair<State, Features>>> trajectories = IrlUtil.getTrajectories(numTrajectories, new TicTacToeState(), randomPolicy, new TicTacToeTask(0.9), random);
+
+        List<Double> fe = IrlUtil.calculateFeatureExpectations(trajectories, 0.9, featureSetClass);
+        List<Double> ofe = IrlUtil.calculateFeatureExpectations(optimalTrajectories, 0.9, featureSetClass);
+        double performance = calculatePerformance(optimalTrajectories);
+        System.out.println("Optimal_Performance," + performance);
+        performance = calculatePerformance(trajectories);
+        System.out.println("0,Performance," + performance);
+
+        //OBJ FUNCTION = max: t
+        //CONSTRAINS:
+        // L2 norm of weights <= 1
+        // fe - ofe + t <= 0
+        double[] objectiveFunctionVector = new double[fe.size() + 1];
+        objectiveFunctionVector[fe.size()] = -1.;
+        LinearMultivariateRealFunction objectiveFunction = new LinearMultivariateRealFunction(objectiveFunctionVector, 0);
+
+        double[][] pMatrix = new double[fe.size()+1][fe.size()+1];
+        double[] pVector = new double[fe.size()+1];
+        for (int i = 0; i < fe.size(); i++) {
+            for (int j = 0; j < fe.size(); j++) {
+                pVector[i] = 1;
+                if(i == j)
+                    pMatrix[i][j] = 1;
+                else
+                    pMatrix[i][j] = 0;
+            }
+        }
+        pVector[fe.size()] = 0;
+
+        List<ConvexMultivariateRealFunction> inequalities = new ArrayList<>();
+        inequalities.add(new PDQuadraticMultivariateRealFunction(pMatrix, pVector, 1));
+        double[] constraint = new double[fe.size() + 1];
+        for (int i = 0; i < fe.size(); i++)
+            constraint[i] =  fe.get(i) - ofe.get(i);
+
+        constraint[fe.size()] = 1.;
+        inequalities.add(new LinearMultivariateRealFunction(constraint, 0));
+
+        List<Double> rewardFunction = QpSolveUtil.solve(objectiveFunction, inequalities);
+        for (int i = 1; i <= 15; i++) {
+            System.out.println("********** iteration: "+ i);
+
+            valueIteration = new ValueIteration(states, ticTacToe, new TicTacToeCustomTask(0.9, rewardFunction, featureSetClass), random);
+            valueIteration.computeOptimalV();
+            valueIteration.computeQFactors();
+            randomPolicy = valueIteration.computeOptimalPolicy();
+            trajectories = IrlUtil.getTrajectories(numTrajectories, new TicTacToeState(), randomPolicy, new TicTacToeTask(0.9), random);
+            performance = calculatePerformance(trajectories);
+            System.out.println(i+",Performance," + performance);
+            System.out.println("Distance from optimal policy: " +policyDifferences(randomPolicy, optimalPolicy, states));
+            fe = IrlUtil.calculateFeatureExpectations(trajectories, 0.9, featureSetClass);
+
+            constraint = new double[fe.size() + 1];
+            for (int j = 0; j < fe.size(); j++)
+                constraint[j] =  fe.get(j) - ofe.get(j);
+
+            constraint[fe.size()] = 1.;
+            inequalities.add(new LinearMultivariateRealFunction(constraint, 0));
+
+            rewardFunction = QpSolveUtil.solve(objectiveFunction, inequalities);
+
+            System.out.println("******* weights *******");
+            for (int j = 0; j < rewardFunction.size() - 1; j++)
+                System.out.println(i+","+featureSetClass.featureNames().get(j)+","+rewardFunction.get(j));
         }
     }
 
@@ -297,7 +383,7 @@ public class AbbeelTicTacToe {
                 rewardFunction = UtilAmpi.normalize(rewardFunction);
 
                 for (int j = 0; j < rewardFunction.size(); j++)
-                    System.out.println(featureSetClass.featureNames().get(j)+":"+ rewardFunction.get(j));
+                    System.out.println(i+","+featureSetClass.featureNames().get(j)+","+rewardFunction.get(j));
 
                 System.out.println("*************");
 

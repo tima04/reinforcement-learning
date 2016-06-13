@@ -52,7 +52,7 @@ public class RolloutUtil {
     }
 
     //Used when the rollout chooses actions according to classification betas.
-    public static double doRolloutTetris_(Pair<Object, Action> stateAction, int n, Game game, List<Double> betaReg, List<Double> betaCl, double gamma, FeatureSet featureSetReg, FeatureSet featureSetCl, UtilAmpi.ActionType rolloutActionType, Random random, FeatureSet paretoFeatureSet, double[] paretoWeights) {
+    public static double doRolloutTetrisIterative(Pair<Object, Action> stateAction, int n, List<Double> betaReg, List<Double> betaCl, double gamma, FeatureSet featureSetReg, FeatureSet featureSetCl, Random random) {
         TetrisState state = ((TetrisState)stateAction.getFirst()).copy();
         int rolloutIndex = 0;
         double reward = 0;
@@ -63,7 +63,9 @@ public class RolloutUtil {
             state.nextState(action, random);
             rolloutIndex++;
         }
-        return reward;
+        //// TODO: 10/06/16 Filter out dominated states according to actiontype.
+        double lastStateValue = state.features.gameOver? 0 : getValue(state.features, betaReg, featureSetReg);
+        return reward + Math.pow(gamma, n) * lastStateValue;
     }
 
     public static Action getBestActionTetris(Object state, List<Double> beta, FeatureSet featureSet, Random random) {
@@ -108,7 +110,14 @@ public class RolloutUtil {
         List<Double> xs = new ArrayList<>();
         Object state = stateAction.getFirst();
         String action = stateAction.getSecond();
-        xs.addAll(game.getFeatureValues(featureSet, state, action));
+//        xs.addAll(game.getFeatureValues(featureSet, state, action));
         return UtilAmpi.dotproduct(xs, beta);
+    }
+
+
+    // returns: b0 + b1*f1 + b2*f2 + ... + bn*fn
+    // where f1,..,fn are features of state and b0..bn is beta vector.
+    public static double getValue(TetrisFeatures features, List<Double> beta, FeatureSet featureSet ) {
+        return UtilAmpi.dotproduct(featureSet.make(features), beta);
     }
 }

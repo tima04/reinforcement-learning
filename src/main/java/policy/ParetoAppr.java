@@ -24,11 +24,11 @@ public class ParetoAppr implements PickAction{
     double[] weights;
     FeatureSet featureSet;
     UtilAmpi.ActionType type;
-    int betterIn;
-    int worseIn;
+    List<Integer> betterIn;
+    List<Integer> worseIn;
     Random random;
 
-    public ParetoAppr(double[] weights, FeatureSet featureSet, UtilAmpi.ActionType type, int betterIn, int worseIn, Random random){
+    public ParetoAppr(double[] weights, FeatureSet featureSet, UtilAmpi.ActionType type, List<Integer> betterIn, List<Integer> worseIn, Random random){
         this.weights = weights;
         this.featureSet = featureSet;
         this.type = type;

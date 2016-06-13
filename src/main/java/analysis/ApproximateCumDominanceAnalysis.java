@@ -16,12 +16,12 @@ public class ApproximateCumDominanceAnalysis implements Analysis{
     GeneralReport report;
     List<Double> weightVector;
     double[] weightArray;
-    int betterIn;
-    int worseIn;
+    List<Integer> betterIn;
+    List<Integer> worseIn;
 
     FeatureSet featureSet;
 
-    ApproximateCumDominanceAnalysis(int betterIn, int worseIn, FeatureSet featureSet){
+    ApproximateCumDominanceAnalysis(List<Integer> betterIn, List<Integer> worseIn, FeatureSet featureSet){
         this.betterIn = betterIn;
         this.worseIn = worseIn;
         this.featureSet = featureSet;
@@ -34,7 +34,7 @@ public class ApproximateCumDominanceAnalysis implements Analysis{
         this.weightArray = new double[weightVector.size()];
         for (int i = 0; i < weightArray.length; i++)
                 weightArray[i] = weightVector.get(i);
-        report.addLine("placements,distinct,pareto,pareto_distinct,action_within_pareto,action_ideal");
+        report.addLine("placements,distinct,pareto,pareto_distinct,ideal_within_pareto");
     }
 
     @Override
@@ -43,7 +43,7 @@ public class ApproximateCumDominanceAnalysis implements Analysis{
         actionFeatures = actionFeatures.stream().filter(p -> !p.getSecond().gameOver).collect(Collectors.toList()); //Filter out actions that lead to gameover.
         List<TetrisAction> bctsActions = BctsActions.get(stateBefore);
 
-        boolean agentOptionsAreDominant = false;
+        int bctsActionWithinSet = 0;
         int actionBetweenPareto = 0;
         int actionIdeal = 0;
 
@@ -71,7 +71,7 @@ public class ApproximateCumDominanceAnalysis implements Analysis{
             if (pareto[i]) {
                 for (TetrisAction bctsAction : bctsActions) {
                     if(actionFeatures.get(i).getFirst().equals(bctsAction))
-                        agentOptionsAreDominant = true;
+                        bctsActionWithinSet = 1;
                 }
                 if(actionFeatures.get(i).getFirst().equals(action)){
                     actionBetweenPareto = 1;
@@ -89,8 +89,8 @@ public class ApproximateCumDominanceAnalysis implements Analysis{
         }
 
         if(actionFeatures.size() > 0) { //When actions.size() is 0 the state is already gameover.
-            report.addLine(objects.length + "," + DistinctCounter.howManyDistinct(objects) + "," + numPareto + "," + DistinctCounter.howManyDistinct(paretoObjects)+","+actionBetweenPareto+","+actionIdeal);
-            System.out.println(objects.length + "," + DistinctCounter.howManyDistinct(objects) + "," + numPareto + "," + DistinctCounter.howManyDistinct(paretoObjects)+","+actionBetweenPareto+","+actionIdeal);
+            report.addLine(objects.length + "," + DistinctCounter.howManyDistinct(objects) + "," + numPareto + "," + DistinctCounter.howManyDistinct(paretoObjects)+","+bctsActionWithinSet);
+            System.out.println(objects.length + "," + DistinctCounter.howManyDistinct(objects) + "," + numPareto + "," + DistinctCounter.howManyDistinct(paretoObjects)+","+bctsActionWithinSet);
         }
     }
 
