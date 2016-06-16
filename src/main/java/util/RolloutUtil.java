@@ -2,10 +2,7 @@ package util;
 
 
 import algs.Game;
-import domains.Action;
-import domains.FeatureSet;
-import domains.Features;
-import domains.State;
+import domains.*;
 import domains.tetris.TetrisAction;
 import domains.tetris.TetrisFeatures;
 import domains.tetris.TetrisState;
@@ -21,7 +18,7 @@ public class RolloutUtil {
 
     public static List<Object> getRolloutSetTetris(Game game, int n, List<Double> beta, FeatureSet featureSet, UtilAmpi.ActionType actionType, FeatureSet paretoFeatureSet, double[] paretoWeights, Random random) {
         int k = 2;
-        List<Object> rslt = game.getRandomStates(k*n, beta, featureSet, 5, actionType, paretoFeatureSet, paretoWeights);
+        List<Object> rslt = game.getRandomStates(k*n, beta, featureSet, 10, actionType, paretoFeatureSet, paretoWeights);
         Collections.shuffle(rslt, random);
         return rslt.subList(0, n);
     }
@@ -52,13 +49,13 @@ public class RolloutUtil {
     }
 
     //Used when the rollout chooses actions according to classification betas.
-    public static double doRolloutTetrisIterative(Pair<Object, Action> stateAction, int n, List<Double> betaReg, List<Double> betaCl, double gamma, FeatureSet featureSetReg, FeatureSet featureSetCl, Random random) {
+    public static double doRolloutTetrisIterative(Pair<Object, Action> stateAction, int n, List<Double> betaReg, List<Double> betaCl, double gamma, FeatureSet featureSetReg, FeatureSet featureSetCl, Random random, Task task) {
         TetrisState state = ((TetrisState)stateAction.getFirst()).copy();
         int rolloutIndex = 0;
         double reward = 0;
         state.nextState(stateAction.getSecond(), random);
         while(rolloutIndex < n && !state.features.gameOver){
-            reward = reward + Math.pow(gamma, rolloutIndex)*state.features.nClearedLines;
+            reward = reward + Math.pow(gamma, rolloutIndex)*task.getReward(null, null, state);
             Action action = getBestActionTetris(state, betaCl, featureSetCl, random);
             state.nextState(action, random);
             rolloutIndex++;
