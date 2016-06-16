@@ -40,7 +40,7 @@ public class Dpi {
 //		initialWeights = TetrisWeightVector.make("DT10"); best.
 		int numIt = 10;
 		double gamma = 0.9;
-		int sampleSize = 5000;
+		int sampleSize = 40000;
 		int nrollout = 5;
 		TetrisParameters.getInstance().setSize(10,10);
 
@@ -180,9 +180,11 @@ public class Dpi {
 		List<Double> utils = new ArrayList<>();
 
 //		((TetrisState)state).print();
+		long rolloutSeed = random.nextInt();
 		for (Pair<Action,List<Double>> action : actions) {
+				Random rolloutRandom = new Random(rolloutSeed);
 				Pair<Object, Action> stateAction = new Pair<>(state, action.getFirst());
-				features.add(action.getSecond());
+					features.add(action.getSecond());
 //			Pair<Object, Double> stateReward = this.game.getNewStateAndReward(state, action.getFirst());
 				double qEstimate = 0;
 				int averageOver = 1;

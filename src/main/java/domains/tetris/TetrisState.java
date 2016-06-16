@@ -101,6 +101,10 @@ public class TetrisState implements State {
         nextState(((TetrisAction)action).col, ((TetrisAction)action).rot, random);
     }
 
+    public void nextState(Action action, Tetromino tetromino) {
+        nextState(((TetrisAction)action).col, ((TetrisAction)action).rot, new Random(), tetromino);
+    }
+
     /**
      * Changes the state for the one resulting after placing the rotated piece on the given column.
      * If the old state is needed, copy should be called first.
@@ -455,6 +459,21 @@ public class TetrisState implements State {
         return features;
     }
 
+    public boolean boardEquals(boolean board[][]){
+        for (int r = 0; r < height; r++) {
+            for (int c = 0; c < width; c++) {
+                if(this.board[r][c] != board[r][c])
+                    return false;
+            }
+        }
+        return true;
+    }
 
+    public boolean[][] board() {
+        return this.board;
+    }
 
+    public Tetromino piece() {
+        return piece;
+    }
 }

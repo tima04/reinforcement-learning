@@ -53,8 +53,8 @@ public class AbbeelTicTacToe {
 //        setOutput("abbeel");
 //        constraintPerPolicy();
 //        abbeel2004();
-//        abbeel2004svm();
-        abbeel2004QP();
+        abbeel2004svm();
+//        abbeel2004QP();
     }
 
     private static void setOutput(String fileName) {

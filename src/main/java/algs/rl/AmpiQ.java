@@ -3,6 +3,7 @@ package algs.rl;
 import algs.Game;
 import domains.Action;
 import domains.FeatureSet;
+import domains.Task;
 import domains.tetris.*;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.linear.SingularMatrixException;
@@ -75,6 +76,7 @@ public class AmpiQ {
 	FeatureSet featureSet;
 	int numFeatures;
 	public List<Object> rolloutSet = null;
+	Task task = new TetrisTaskLines(0.9);
 
 	private UtilAmpi.ActionType rolloutActionType;
 	Random random;
@@ -126,7 +128,7 @@ public class AmpiQ {
 
 				List<Double> x = this.game.getFeatureValues(featureSet, state, action);
 				Pair<Object, Action> sa = new Pair<>(state, action);
- 				double y = RolloutUtil.doRolloutTetrisIterative(sa, this.nRollout, beta, beta, gamma, featureSet, featureSet, random);
+ 				double y = RolloutUtil.doRolloutTetrisIterative(sa, this.nRollout, beta, beta, gamma, featureSet, featureSet, random, task);
 				xs[i] = ArrayUtils.toPrimitive(x.toArray(new Double[x.size()]));
 				ys[i] = y;
 			}

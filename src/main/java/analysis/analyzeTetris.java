@@ -207,7 +207,7 @@ public class analyzeTetris {
     }
 
 
-    static Pair<TetrisState, TetrisAction> parseLine(String line){
+    public static Pair<TetrisState, TetrisAction> parseLine(String line){
         String[] splittedLine = line.split(",");
         TetrisState state = TetrisState.parseState(splittedLine[0]);
         TetrisAction action = new TetrisAction(0, 0);

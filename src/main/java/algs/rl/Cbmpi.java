@@ -4,6 +4,7 @@ package algs.rl;
 import algs.Game;
 import domains.Action;
 import domains.FeatureSet;
+import domains.Task;
 import domains.tetris.*;
 import fr.inria.optimization.cmaes.CMAEvolutionStrategy;
 import fr.inria.optimization.cmaes.CMASolution;
@@ -86,6 +87,7 @@ public class Cbmpi {
 	public UtilAmpi.ActionType actionType = null;
 	public List<Object> rolloutSet = null;
 	Random random;
+	Task task = new TetrisTaskLines(0.9);
 
 	int samplingFactor = 3; //Size of the rollout set before subsampling is samplingFactor * rolloutSetSize.
 
@@ -166,7 +168,7 @@ public class Cbmpi {
 					Pair<Object, Action> sa = new Pair<>(state, actionFeatures.getFirst());
 					xsReg.add(actionFeatures.getSecond());
 					ysReg.add(RolloutUtil.doRolloutTetrisIterative(sa, this.nRollout, betaReg, betaCl, gamma,
-							featureSetValue, featureSetClassification, random));
+							featureSetValue, featureSetClassification, random, task));
 				}
 			}
 
@@ -218,7 +220,7 @@ public class Cbmpi {
 				int averageOver = 1;
 				for (int i = 0; i < averageOver; i++) {
 					qEstimate = qEstimate + RolloutUtil.doRolloutTetrisIterative(stateAction, nrollout, betaReg, betaCl,
-							gamma, featureSetValue, featureSetClassification, random);
+							gamma, featureSetValue, featureSetClassification, random, task);
 				}
 				utils.add(qEstimate / averageOver);
 		}

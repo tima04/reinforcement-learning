@@ -26,11 +26,14 @@ public class playTetris {
 //        weights.add(-24.04);
 //        weights.add(-1.61);
 
-
+        weights = Arrays.asList(-3.064882301234735, 0.9696923607539406, -0.9188727656231099, -1.7511886618412267, -0.9298877590132281, -1.266237876496904, -0.6619945964629006, -4.10221875899607, 0.5116115645328031);
         double[] paretoWeights = new double[]{-5, -6, -2, -3, 1, -4, -7, -1}; //It should have the same effect as bcts since the direction and order are the same.
         int[] paretoSigns = new int[]{-1, -1, -1, -1, 1, -1, -1, -1};
 
         Random random = new Random();
+        long seed = random.nextInt();
+        System.out.println("seed: " + seed);
+        random = new Random(seed);
                 List<List<Integer>> cueGroups = new ArrayList<>();
                 cueGroups.add(Arrays.asList(1,3,5,6));
                 cueGroups.add(Arrays.asList(0,2,4,7));
@@ -60,6 +63,10 @@ public class playTetris {
 
 
 //        playGames(10000, new SingleCueTallyRest(paretoSigns, 6, new TetrisFeatureSet("bcts"), random), random);
+        playGames(100, new LinearPick(weights, new TetrisFeatureSet("thierry"), random), random, "");
+        playGames(100, new LinearPick(weights, new TetrisFeatureSet("thierry"), random), random, "");
+        playGames(100, new LinearPick(weights, new TetrisFeatureSet("thierry"), random), random, "");
+        playGames(100, new LinearPick(weights, new TetrisFeatureSet("thierry"), random), random, "");
         playGames(100, new LinearPick(weights, new TetrisFeatureSet("thierry"), random), random, "");
 //        playSteps(10000, new LinearPick(weights, new TetrisFeatureSet("bcts"), random), random);
 //        playGames(10, new MultiPareto(paretoWeights, new TetrisFeatureSet("bcts"), random), cueGroups, UtilAmpi.ActionType.CUMDOM, random), random);
@@ -103,12 +110,12 @@ public class playTetris {
             }
             scoreReport.addLine(game+","+score+","+steps);
 //            System.out.println("_____________");
-            System.out.println("lines cleared: "+score);
+//            System.out.println("lines cleared: "+score);
             totalScore = totalScore + score;
-            System.out.println("Time spent: " + (System.currentTimeMillis() - t0)/60000. + " minutes");
+//            System.out.println("Time spent: " + (System.currentTimeMillis() - t0)/60000. + " minutes");
 
         }
-        scoreReport.generateNew();
+//        scoreReport.generateNew();
         //        System.out.println("Total steps: " + totalSteps);
         System.out.println("mean: " +totalScore/numGames);
     }
