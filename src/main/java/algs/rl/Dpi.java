@@ -40,8 +40,8 @@ public class Dpi {
 //		initialWeights = TetrisWeightVector.make("DT10"); best.
 		int numIt = 10;
 		double gamma = 0.9;
-		int sampleSize = 40000;
-		int nrollout = 5;
+		int sampleSize = 30000;
+		int nrollout = 10;
 		TetrisParameters.getInstance().setSize(10,10);
 
 		setOutput("dpi_"+featureSet.name()+"_"+sampleSize+"_"+arg[0]);
@@ -102,7 +102,7 @@ public class Dpi {
 		System.out.println("Sample size:" + rolloutSetSize);
 		System.out.println("Rollout length:" + nRollout);
 		System.out.println("Feature set: " +featureSetClassification.name());
-		System.out.println("");
+		System.out.println("fixing seed for rollouts");
 		this.game = game;
 		this.featureSetClassification = featureSetClassification;
 		this.maxSim = maxSim;
@@ -190,7 +190,7 @@ public class Dpi {
 				int averageOver = 1;
 				for (int i = 0; i < averageOver; i++) {
 					qEstimate = qEstimate + RolloutUtil.doRolloutTetrisIterative(stateAction, nrollout, betaReg, betaCl,
-							gamma, featureSetClassification, featureSetClassification, random, task);
+							gamma, featureSetClassification, featureSetClassification, rolloutRandom, task);
 				}
 				utils.add(qEstimate / averageOver);
 		}
