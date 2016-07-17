@@ -35,11 +35,17 @@ public class SingleCue implements PickAction{
      * @param actions
      * @return
      */
-    public int pick(State state, List<Pair<Action, Features>> actions){
+    public int[] pick(State state, List<Pair<Action, Features>> actions){
         return decisionNode(state, actions, ply).getFirst();
     }
 
+    public int getFeatureIdx(){
+        return featureIdx;
+    }
 
+    public int getDirection(){
+        return sign;
+    }
 
     /**
      * Single cue
@@ -47,13 +53,13 @@ public class SingleCue implements PickAction{
      * @param actions
      * @return
      */
-    int singleCue(List<Pair<Action, Features>> actions){
+    int[] singleCue(List<Pair<Action, Features>> actions){
         int[] indicesOfMax;
         if(actions.size() == 0)
-            return 0;
+            return new int[]{};
 
         indicesOfMax = findIndicesOfBestValue(actions, sign, featureSet, featureIdx);
-        return indicesOfMax[random.nextInt(indicesOfMax.length)];
+        return indicesOfMax;
     }
 
 
@@ -69,16 +75,20 @@ public class SingleCue implements PickAction{
      * @param ply
      * @return
      */
-    Pair<Integer, Double> decisionNode(State state, List<Pair<Action, Features>> actions, int ply){
+    Pair<int[], double[]> decisionNode(State state, List<Pair<Action, Features>> actions, int ply){
         if(ply <= 0){
             if(actions.size() == 0)
-                return new Pair(0, 0.);
-            int actionIdx = singleCue(actions);
-            return new Pair(actionIdx, featureSet.make(actions.get(actionIdx).getSecond()).get(featureIdx));
+                return new Pair(new int[]{}, new double[]{});
+            int[] actionIdx = singleCue(actions);
+            double[] values = new double[actionIdx.length];
+            for (int i = 0; i < values.length; i++) {
+                values[i] = featureSet.make(actions.get(actionIdx[i]).getSecond()).get(featureIdx);
+            }
+            return new Pair(actionIdx, values);
         }else{
             int[] indicesOfMax;
             if(actions.size() == 0)
-                return new Pair(0,0.);
+                return new Pair(new int[]{}, new double[]{});
 
 
             indicesOfMax = findIndicesOfBestValue(actions, sign, featureSet, featureIdx);
@@ -88,7 +98,7 @@ public class SingleCue implements PickAction{
             }
             int[] max = Compute.indicesOfMax(values);
             int randomMax = random.nextInt(max.length);
-            return new Pair(indicesOfMax[randomMax], values[randomMax]);
+            return new Pair(indicesOfMax, values);
         }
     }
 
@@ -118,8 +128,11 @@ public class SingleCue implements PickAction{
         for (State tetrisState : sprimes) {
             List<Pair<Action, Features>> actions = tetrisState.getActionFeaturesList();
             actions = actions.stream().filter(p -> task.taskEnds(p.getSecond())).collect(Collectors.toList());//filter out gameover actions.
-            double value = decisionNode(tetrisState, actions, ply - 1).getSecond();
-            expectation += value * prob;
+            double[] maxvalues =  decisionNode(tetrisState, actions, ply - 1).getSecond();
+            if(maxvalues.length > 0) {
+                double value = maxvalues[random.nextInt(maxvalues.length)];
+                expectation += value * prob;
+            }
         }
         return expectation;
     }

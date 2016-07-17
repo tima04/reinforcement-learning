@@ -53,8 +53,8 @@ public class AbbeelTicTacToe {
 //        setOutput("abbeel");
 //        constraintPerPolicy();
 //        abbeel2004();
-        abbeel2004svm();
-//        abbeel2004QP();
+//        abbeel2004svm();
+        abbeel2004QP();
     }
 
     private static void setOutput(String fileName) {
@@ -177,7 +177,7 @@ public class AbbeelTicTacToe {
         System.out.println("0,Performance," + performance);
 
         //OBJ FUNCTION = max: t
-        //CONSTRAINS:
+        //CONSTRAINTS:
         // L2 norm of weights <= 1
         // fe - ofe + t <= 0
         double[] objectiveFunctionVector = new double[fe.size() + 1];

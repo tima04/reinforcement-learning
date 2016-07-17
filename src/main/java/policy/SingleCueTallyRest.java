@@ -27,7 +27,7 @@ public class SingleCueTallyRest implements PickAction{
      * @param actions
      * @return
      */
-    public int pick(State state, List<Pair<Action, Features>> actions){
+    public int[] pick(State state, List<Pair<Action, Features>> actions){
         return singleCueTallyRest(actions);
     }
 
@@ -37,10 +37,10 @@ public class SingleCueTallyRest implements PickAction{
      * @param actions
      * @return
      */
-    int singleCueTallyRest(List<Pair<Action, Features>> actions){
+    int[] singleCueTallyRest(List<Pair<Action, Features>> actions){
         int[] indicesOfMax;
         if(actions.size() == 0)
-            return 0;
+            return new int[]{};
 
         List<Integer> includingOnly = new ArrayList<>();
         for (int i = 0; i < actions.size(); i++)
@@ -64,7 +64,7 @@ public class SingleCueTallyRest implements PickAction{
 
         indicesOfMax = Compute.indicesOfMax(votes);
 
-        return indicesOfMax[random.nextInt(indicesOfMax.length)];
+        return indicesOfMax;
     }
 
 

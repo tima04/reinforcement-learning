@@ -29,8 +29,9 @@ public class TetrisFeatures implements Features {
 	public final boolean gameOver;
 	public final int holesDepth;
 	public final int nHoles; 
-	public final int sumHeightDiff; 
-	public final int nErodedCells; 
+	public final int sumHeightDiff;
+	public final int sumHeightDiffIncludingBorders;
+	public final int nErodedCells;
 	public final int nPatternDiversity;
 	public final int nClearedLines;
 	public final int nBrickCleared;
@@ -41,6 +42,9 @@ public class TetrisFeatures implements Features {
 	public final int nHolesDelta;
 	public final double averageHeightDelta;
 	public final int sumHeightDiffDelta;
+	public final int sumHeightDiffDeltaSoft;
+
+	public final double distanceFromCenter;
 
 	public static void main(String[] args) {
 		int[] ch = {1, 1, 2, 3};
@@ -48,7 +52,7 @@ public class TetrisFeatures implements Features {
 		set.add(new Pair(0,2));
 		set.add(new Pair(0,3));
 		set.add(new Pair(1,3));
-		TetrisFeatures tf = new Builder(4, 4, 0, 0, 0, true).colHeights(ch).holesCords(set).build();
+		TetrisFeatures tf = new Builder(4, 4, 0, 0, 0, 0, true).colHeights(ch).holesCords(set).build();
 		System.out.println("text:" + tf.holesDepth);
 	}
 	
@@ -71,11 +75,13 @@ public class TetrisFeatures implements Features {
 			.map(p -> p.getFirst())
 			.collect(Collectors.toSet()).size();
 		this.landingHeight = builder.landingHeight;
+		this.distanceFromCenter = builder.distanceFromCenter;
 		this.cumWells = getCumWells();
 		this.colHeightsDiff = getColDiff();
 		this.pileHeight = Arrays.stream(colHeights).max().getAsInt();
 		this.nHoles = holesCords.size();
 		this.sumHeightDiff = Arrays.stream(colHeightsDiff).sum();
+		this.sumHeightDiffIncludingBorders = Arrays.stream(colHeightsDiff).sum() + (height-colHeights[0]) + (height-colHeights[width-1]);
 		this.averageHeight = (double)Arrays.stream(colHeights).sum()/(double)width;
 		this.colTransition = getColTransition();
 		this.rowTransition = getRowTransition(); 
@@ -88,11 +94,14 @@ public class TetrisFeatures implements Features {
 			this.pileHeightDelta = pileHeight - oldFeatures.pileHeight;
 			this.nHolesDelta = nHoles - oldFeatures.nHoles;
 			this.sumHeightDiffDelta = sumHeightDiff - oldFeatures.sumHeightDiff;
+			int sumHeightDiffDeltaSoftTemp = sumHeightDiffDelta <= 1?0:sumHeightDiffDelta;
+			this.sumHeightDiffDeltaSoft = sumHeightDiffDeltaSoftTemp >= 3?3:sumHeightDiffDeltaSoftTemp;
 			this.averageHeightDelta = averageHeight - oldFeatures.averageHeight;
 		}else{
 			this.pileHeightDelta = 0;
 			this.nHolesDelta = 0;
 			this.sumHeightDiffDelta = 0;
+			this.sumHeightDiffDeltaSoft = 0;
 			this.averageHeightDelta = 0;
 		}
 
@@ -318,6 +327,7 @@ public class TetrisFeatures implements Features {
 		private int nClearedLines;
 		private int nBrickCleared;
 		private double landingHeight;
+		private double distanceFromCenter;
 
 		//optional either a and b or c must be given.
 		private int[] colHeights = null; //a 
@@ -327,7 +337,7 @@ public class TetrisFeatures implements Features {
 		//optional parameter for calculating change features
 		private TetrisFeatures oldFeatures = null;
 
-		public Builder(int height, int width, int nClearedLines, int nBrickCleared, double landingHeight,
+		public Builder(int height, int width, int nClearedLines, int nBrickCleared, double landingHeight, double distanceFromCenter,
 					   boolean gameOver) {
 			this.height = height;
 			this.width = width;
@@ -335,6 +345,7 @@ public class TetrisFeatures implements Features {
 			this.nBrickCleared = nBrickCleared;
 			this.gameOver = gameOver;
 			this.landingHeight = landingHeight;
+			this.distanceFromCenter = distanceFromCenter;
 		}
 
 		public Builder holesCords(Set<Pair<Integer, Integer>> val) {

@@ -8,6 +8,7 @@ import domains.tetris.TetrisAction;
 import domains.tetris.TetrisFeatureSet;
 import domains.tetris.TetrisFeatures;
 import domains.tetris.TetrisState;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.util.Pair;
 import util.LinearDecisionRule;
 import util.UtilAmpi;
@@ -42,7 +43,7 @@ public class ParetoAppr implements PickAction{
      * @param actionFeatures
      * @return
      */
-    public int pick(State state, List<Pair<Action, Features>> actionFeatures){
+    public int[] pick(State state, List<Pair<Action, Features>> actionFeatures){
         double[][] objects = new double[actionFeatures.size()][weights.length];
 
         //fill objects only with all cues
@@ -66,7 +67,8 @@ public class ParetoAppr implements PickAction{
                 paretoIndices.add(i);
         }
         if(paretoIndices.size() == 0)//All actions can lead to game over.
-            return 0;
-        return paretoIndices.get(random.nextInt(paretoIndices.size()));
+            return new int[]{};
+
+        return ArrayUtils.toPrimitive(paretoIndices.toArray(new Integer[paretoIndices.size()]));
     }
 }

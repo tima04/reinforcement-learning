@@ -125,7 +125,7 @@ public class Cbmpi {
 		double[] betaVector = new double[betaCl.size()];
 		for (int i = 0; i < betaVector.length; i++)
 			betaVector[i] = betaCl.get(i);
-		EvaluateLinearAgent.gamesTetris(100, random, featureSetPolicy, betaCl, actionType, paretoFeatureSet, paretoWeights, true);
+		EvaluateTetrisAgent.gamesTetris(100, random, featureSetPolicy, betaCl, actionType, paretoFeatureSet, paretoWeights, true);
 		System.out.println("****************************");
 	}
 
@@ -168,7 +168,7 @@ public class Cbmpi {
 					Pair<Object, Action> sa = new Pair<>(state, actionFeatures.getFirst());
 					xsReg.add(actionFeatures.getSecond());
 					ysReg.add(RolloutUtil.doRolloutTetrisIterative(sa, this.nRollout, betaReg, betaCl, gamma,
-							featureSetValue, featureSetClassification, random, task));
+							featureSetValue, featureSetClassification, random, task, actionType, paretoFeatureSet, paretoWeights));
 				}
 			}
 
@@ -195,7 +195,7 @@ public class Cbmpi {
 			double[] betaVector = new double[betaCl.size()];
 			for (int i = 0; i < betaVector.length; i++)
 				betaVector[i] = betaCl.get(i);
-			EvaluateLinearAgent.gamesTetris(100, random, featureSetClassification, betaCl, actionType, paretoFeatureSet, paretoWeights, true);
+			EvaluateTetrisAgent.gamesTetris(100, random, featureSetClassification, betaCl, actionType, paretoFeatureSet, paretoWeights, true);
 			System.out.println(String.format("This iteration took: %s seconds", (System.currentTimeMillis() - t0) / (1000.0)));
 			System.out.println("****************************");
 		}
@@ -220,7 +220,7 @@ public class Cbmpi {
 				int averageOver = 1;
 				for (int i = 0; i < averageOver; i++) {
 					qEstimate = qEstimate + RolloutUtil.doRolloutTetrisIterative(stateAction, nrollout, betaReg, betaCl,
-							gamma, featureSetValue, featureSetClassification, random, task);
+							gamma, featureSetValue, featureSetClassification, random, task, actionType, paretoFeatureSet, paretoWeights);
 				}
 				utils.add(qEstimate / averageOver);
 		}

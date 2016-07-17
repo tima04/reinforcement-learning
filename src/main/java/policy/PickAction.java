@@ -12,5 +12,5 @@ import java.util.List;
 
 @FunctionalInterface
 public interface PickAction {
-    int pick(State state, List<Pair<Action, Features>> actions);
+    int[] pick(State state, List<Pair<Action, Features>> actions);
 }

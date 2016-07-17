@@ -20,8 +20,8 @@ public class FixedPolicy implements Policy {
 	}
 
 	@Override
-	public boolean isGreedyAction(State s, Action a) {
-		return policy.get(s).equals(a);
+	public double isGreedyAction(State s, Action a) {
+		return policy.get(s).equals(a)?1:0;
 	}
 
 }

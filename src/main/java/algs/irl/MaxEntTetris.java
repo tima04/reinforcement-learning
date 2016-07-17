@@ -4,6 +4,7 @@ package algs.irl;
 
 import algs.Game;
 import algs.rl.Dpi;
+import algs.rl.LambdaPI;
 import algs.rl.ValueIteration;
 import domains.FeatureSet;
 import domains.Features;
@@ -21,6 +22,7 @@ import models.Policy;
 import org.apache.commons.math3.util.Pair;
 import policy.LinearPick;
 import util.IrlUtil;
+import util.RolloutUtil;
 import util.UtilAmpi;
 
 import java.io.File;
@@ -34,23 +36,22 @@ public class MaxEntTetris {
 
     static double learningRate = 0.01;
     static Random random = new Random(2);
-    static int numTrajectories = 100;
-    static int trajectoryLength = 1000;
+    static int numTrajectories = 10000;
+    static int trajectoryLength = 10;
     static TetrisFeatureSet rewardFunctionFeatureSet = new TetrisFeatureSet("lagoudakisthierry");
-    static TetrisFeatureSet policyFeatureSet = new TetrisFeatureSet("bcts");
-
-    static FeatureSet featureSet = new TicTacToeFeatureSet("all");
+    static TetrisFeatureSet policyFeatureSet = new TetrisFeatureSet("lagoudakisthierrybertsekas");
+    static double gamma = 1;
 
     public static void main(String[] arg){
         setOutput("bcts");
-        TetrisParameters.getInstance().setSize(16, 10);
-//        setOutput("MaxEnt");
+        TetrisParameters.getInstance().setSize(20, 10);
         List<Double> weights = TetrisWeightVector.make("bcts");
-        Policy optimalPolicy = new CustomPolicy(new LinearPick(weights, policyFeatureSet, random), new TetrisTaskLines(0.9));
+        Policy optimalPolicy = new CustomPolicy(new LinearPick(weights, new TetrisFeatureSet("bcts"), random), new TetrisTaskLines(0.9), random);
         System.out.println("getting demonstrated trajectories . . .");
-        List<List<Pair<State, Features>>> demonstratedTrajectories = IrlUtil.getTrajectories(numTrajectories, new TetrisState(random), optimalPolicy, new TetrisTruncatedTaskLines(0.9, trajectoryLength, random), random);
+        List<State> initialStates = RolloutUtil.getRolloutSetTetris(new Game(random, new TetrisTaskLines(0.9)), numTrajectories, weights, new TetrisFeatureSet("bcts"), UtilAmpi.ActionType.ANY, new TetrisFeatureSet("bcts"), new double[]{}, random).stream().map(p -> (TetrisState)p).collect(Collectors.toList());
+        List<List<Pair<State, Features>>> demonstratedTrajectories = IrlUtil.getTrajectories(numTrajectories, initialStates, optimalPolicy, new TetrisTruncatedTaskLines(0.9, trajectoryLength, random), random);
 
-        maxEnt(demonstratedTrajectories, 10, numTrajectories, trajectoryLength);
+        maxEnt(demonstratedTrajectories, 10, numTrajectories, trajectoryLength, policyFeatureSet, rewardFunctionFeatureSet);
     }
 
     private static void setOutput(String fileName) {
@@ -69,38 +70,37 @@ public class MaxEntTetris {
         }
     }
 
-    public static Policy maxEnt(List<List<Pair<State, Features>>> demonstratedTrajectories, int iterations, int numTrajectories, int trajectoryLength) {
+    public static List<Policy> maxEnt(List<List<Pair<State, Features>>> demonstratedTrajectories, int iterations, int numTrajectories, int trajectoryLength, FeatureSet policyFeatureSet, FeatureSet rewardFunctionFeatureSet) {
+        List<Policy> policies = new ArrayList<>();
+
         List<Double> randWeights = new ArrayList<>();
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < policyFeatureSet.featureNames().size(); i++)
             randWeights.add(random.nextGaussian());
 
-        Policy closerPolicy = new CustomPolicy(new LinearPick(randWeights, policyFeatureSet, random), new TetrisTaskLines(0.9));
+        Policy closerPolicy = new CustomPolicy(new LinearPick(randWeights, policyFeatureSet, random), new TetrisTaskLines(0.9), random);
 
-        System.out.println("calculating feature expectations . . .");
-        List<Double> ofe = IrlUtil.calculateFeatureExpectations(demonstratedTrajectories, 0.9, rewardFunctionFeatureSet);
+        System.out.println("calculating demonstrated feature expectations . . .");
+        List<Double> ofe = IrlUtil.calculateFeatureExpectations(demonstratedTrajectories, gamma, rewardFunctionFeatureSet);
 
 
-        List<List<Pair<State, Features>>> trajectories = IrlUtil.getTrajectories(numTrajectories, new TetrisState(random), closerPolicy, new TetrisTruncatedTaskLines(0.9, trajectoryLength, random), random);
-        List<Double> fe = IrlUtil.calculateFeatureExpectations(trajectories, 0.9, rewardFunctionFeatureSet);
+        List<State> initialStates = demonstratedTrajectories.stream().filter(p->p.size() > 0).map(p -> ((TetrisState)p.get(0).getFirst()).copy()).collect(Collectors.toList());
+//        List<List<Pair<State, Features>>> trajectories = IrlUtil.getTrajectories(numTrajectories, initialStates, closerPolicy, new TetrisTruncatedTaskLines(0.9, trajectoryLength, random), random);
+//        List<Double> fe = IrlUtil.calculateFeatureExpectationsRecursively(initialStates, new LinearPick(randWeights, policyFeatureSet, random), .9, rewardFunctionFeatureSet, 4);
 
+        List<Double> fe;
         List<Double> rewardFunction = new ArrayList<>();
         for (int i = 0; i < ofe.size(); i++)
-            rewardFunction.add(0.);
+            rewardFunction.add(0.00001);
 
         //We calculate steady state distribution of random policy * features. See Ziebart 2008 Learning from Demonstrated Behavior
-        List<Double> gradient = new ArrayList<>();
-        for (int i = 0; i < ofe.size(); i++) {
-            gradient.add(ofe.get(i) - fe.get(i));
-        }
-
-        for (int i = 0; i < rewardFunction.size(); i++)
-            rewardFunction.set(i, rewardFunction.get(i) + learningRate * gradient.get(i));
+        List<Double> gradient;
 
         for (int i = 1; i <= iterations; i++) {
             System.out.println("********** iteration: "+ i);
-
-            trajectories = IrlUtil.getTrajectories(numTrajectories, new TetrisState(random), closerPolicy, new TetrisTruncatedTaskLines(0.9, trajectoryLength, random), random);
-            fe = IrlUtil.calculateFeatureExpectations(trajectories, 0.9, rewardFunctionFeatureSet);
+            System.out.println("calculating feature expectations of policy i . . .");
+            List<List<Pair<State, Features>>> trajectories = IrlUtil.getTrajectories(numTrajectories, initialStates, closerPolicy, new TetrisTruncatedTaskLines(0.9, trajectoryLength, random), random);
+            fe = IrlUtil.calculateFeatureExpectations(trajectories, gamma, rewardFunctionFeatureSet);
+//            fe = IrlUtil.calculateFeatureExpectationsRecursively(initialStates, closerPolicy.getPick(), gamma, rewardFunctionFeatureSet, trajectoryLength-1);
 
 
             //We calculate steady state distribution of random policy * features. See Ziebart 2008 Learning from Demonstrated Behavior
@@ -109,21 +109,26 @@ public class MaxEntTetris {
                 gradient.add(ofe.get(j) - fe.get(j));
             }
 
-            for (int j = 0; j < rewardFunction.size(); j++)
+            for (int j = 0; j < rewardFunction.size(); j++) {
+//                rewardFunction.set(j, rewardFunction.get(j) * Math.exp(learningRate * gradient.get(j)));//online exponentiated gradient descent.
                 rewardFunction.set(j, rewardFunction.get(j) + learningRate * gradient.get(j));
+
+            }
+
 
             //print reward:
             for (int j = 0; j < rewardFunctionFeatureSet.featureNames().size(); j++)
                 System.out.println("weight,"+i+","+rewardFunctionFeatureSet.featureNames().get(j) + "," + rewardFunction.get(j));
             System.out.println("****");
-            closerPolicy = getNearOptimalPolicy(rewardFunction);
+            closerPolicy = getNearOptimalPolicy(trajectoryLength - 1, rewardFunction, rewardFunctionFeatureSet, policyFeatureSet);
+            policies.add(closerPolicy);
         }
-        return closerPolicy;
+        return policies;
     }
 
 
 
-    private static Policy getNearOptimalPolicy(List<Double> rewardFunction) {
+    private static Policy getNearOptimalPolicy(int rolloutLenght, List<Double> rewardFunction, FeatureSet rewardFunctionFeatureSet, FeatureSet policyFeatureSet) {
 
         List<Double> initWeightsDpi = new ArrayList<>();
         for (String s : policyFeatureSet.featureNames())
@@ -136,19 +141,43 @@ public class MaxEntTetris {
                 new Game(random, task),
                 policyFeatureSet,
                 2,
-                5000,
-                5,
+                1000,
+                rolloutLenght,
                 0.9,
+                1,
                 initWeightsDpi,
                 UtilAmpi.ActionType.ANY,
                 random);
-        dpi.setRounds(10);
+        dpi.setRounds(1);
         dpi.setTask(task);
         List<Double> weights = dpi.iterate();
         System.out.println("DPI done");
-        return new CustomPolicy(new LinearPick(weights, policyFeatureSet, random), new TetrisTaskLines(0.9));
+        return new CustomPolicy(new LinearPick(weights, policyFeatureSet, random), new TetrisTaskLines(0.9), random);
     }
 
+    private static Policy getNearOptimalPolicyLPI(List<Double> rewardFunction, FeatureSet rewardFunctionFeatureSet, FeatureSet policyFeatureSet) {
+
+        List<Double> initWeightsDpi = new ArrayList<>();
+        for (String s : policyFeatureSet.featureNames())
+            initWeightsDpi.add(0.);
+
+
+        System.out.println("Running  Lambda PI");
+        Task task = new TetrisCustomTask(0.9, rewardFunction, rewardFunctionFeatureSet, random);
+        LambdaPI lpi = new LambdaPI(
+                new Game(random, task),
+                policyFeatureSet,
+                15,
+                0.5,
+                0.5,
+                initWeightsDpi,
+                50000,
+                UtilAmpi.ActionType.ANY,
+                random);
+        List<Double> weights = lpi.iterate();
+        System.out.println("Lambda PI done");
+        return new CustomPolicy(new LinearPick(weights, policyFeatureSet, random), new TetrisTaskLines(0.9), random);
+    }
 
     /**
      * According to Ziebart, the gradient of the log likelihood is:

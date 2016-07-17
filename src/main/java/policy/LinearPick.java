@@ -28,7 +28,7 @@ public class LinearPick implements PickAction{
         this.random = random;
     }
 
-    public int pick(State state, List<Pair<Action, Features>> actions) {
+    public int[] pick(State state, List<Pair<Action, Features>> actions) {
         assert !actions.isEmpty();
         double[] values = new double[actions.size()];
         for (int i = 0; i < actions.size(); i++) {
@@ -36,8 +36,11 @@ public class LinearPick implements PickAction{
             List<Double> featureValues = featureSet.make(features);
             values[i] = UtilAmpi.dotproduct(weights, featureValues);
         }
+        if(actions.isEmpty())
+            return new int[]{};
+
         int[] maxIndices = Compute.indicesOfMax(values);
-        int chosenAction = maxIndices[random.nextInt(maxIndices.length)];
-        return chosenAction;
+//        int chosenAction = maxIndices[random.nextInt(maxIndices.length)];
+        return maxIndices;
     }
 }

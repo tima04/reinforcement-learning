@@ -3,11 +3,15 @@ package models;
 
 import domains.Action;
 import domains.State;
+import policy.PickAction;
 
 public interface Policy {
 
 	 Action pickAction(State s);
 
-	 boolean isGreedyAction(State s, Action a);
+	 double isGreedyAction(State s, Action a);
 
+	default PickAction getPick(){
+		return null;
+	}
 }

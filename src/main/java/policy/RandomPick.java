@@ -18,7 +18,12 @@ public class RandomPick implements PickAction{
         this.random = random;
     }
 
-    public int pick(State state, List<Pair<Action, Features>> actions) {
-        return random.nextInt(actions.size());
+    public int[] pick(State state, List<Pair<Action, Features>> actions) {
+
+        int[] indices = new int[actions.size()];
+        for (int i = 0; i < actions.size(); i++)
+            indices[i] = i;
+
+        return indices;
     }
 }

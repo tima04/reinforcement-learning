@@ -34,14 +34,18 @@ public class TetrisState implements State {
             colHeights[i] = 0;
 
         this.rand = rand;
-        features = new TetrisFeatures.Builder(height, width, 0, 0, 0, false).board(board).build();
+        features = new TetrisFeatures.Builder(height, width, 0, 0, 0, 0, false).board(board).build();
         piece = pieces.get(rand.nextInt(pieces.size()));
     }
 
-    TetrisState(boolean[][] board, Tetromino piece, int clearedLines, int nBricksCleared, double landingHeight, boolean gameOver, TetrisFeatures oldTetrisFeatures){
+    public TetrisState(boolean[][] board, Random rand){
+        this(board, pieces.get(rand.nextInt(pieces.size())), 0, 0, 0, 0, false, null);
+    }
+
+    TetrisState(boolean[][] board, Tetromino piece, int clearedLines, int nBricksCleared, double landingHeight, double distanceFromCenter, boolean gameOver, TetrisFeatures oldTetrisFeatures){
         this.board = board;
         this.piece = piece;
-        features = new TetrisFeatures.Builder(height, width, clearedLines, nBricksCleared, landingHeight, gameOver).oldFeatures(oldTetrisFeatures).board(board).build();
+        features = new TetrisFeatures.Builder(height, width, clearedLines, nBricksCleared, landingHeight, distanceFromCenter, gameOver).oldFeatures(oldTetrisFeatures).board(board).build();
     }
 
     /**
@@ -62,7 +66,7 @@ public class TetrisState implements State {
                 }
             }
         }
-        return new TetrisState(board, piece, 0, 0, 0, false, null);
+        return new TetrisState(board, piece, 0, 0, 0, 0, false, null);
     }
 
 
@@ -102,7 +106,11 @@ public class TetrisState implements State {
     }
 
     public void nextState(Action action, Tetromino tetromino) {
-        nextState(((TetrisAction)action).col, ((TetrisAction)action).rot, new Random(), tetromino);
+        nextState(((TetrisAction)action).col, ((TetrisAction)action).rot, new Random(), tetromino, true);
+    }
+
+    public void nextStateNoClearing(Action action, Tetromino tetromino) {
+        nextState(((TetrisAction)action).col, ((TetrisAction)action).rot, new Random(), tetromino, false);
     }
 
     /**
@@ -112,7 +120,7 @@ public class TetrisState implements State {
      * @param rot
      * @param random
      */
-    public void nextState(int col, int rot, Random random, Tetromino tetromino) {
+    public void nextState(int col, int rot, Random random, Tetromino tetromino, boolean clearRows) {
         int offset = getVerticalOffset(col, rot);
         boolean[][] pieceMatrix = piece.getRotatedPiece(rot);
         int[] pieceHeights = piece.getRotatedPieceHeights(rot);
@@ -126,7 +134,7 @@ public class TetrisState implements State {
         //make piece part of board:
         Pair<List<Integer>, Integer> clearedRowsAndCells = clearedRows(col, pieceMatrix, newColHeightsBeforeClearing);
         integratePieceIntoBoard(this.board, pieceMatrix, col, offset, oldColHeights);
-        if(!features.gameOver)
+        if(!features.gameOver && clearRows)
             clearRows(this.board, clearedRowsAndCells);
 
         if(random == null)
@@ -139,14 +147,14 @@ public class TetrisState implements State {
     }
 
     public void nextState(int col, int rot, Random random){
-        nextState(col, rot, random, null);
+        nextState(col, rot, random, null, true);
     }
 
     public List<TetrisState> nextStates(int col, int rot) {
         List<TetrisState> nextStates = new ArrayList<>();
         for (Tetromino tetromino : pieces) {
             TetrisState base = this.copy();
-            base.nextState(col, rot, null, tetromino);
+            base.nextState(col, rot, null, tetromino, true);
             nextStates.add(base);
         }
         return nextStates;
@@ -239,6 +247,7 @@ public class TetrisState implements State {
         int[] newColHeights = getNewColHeights(col, offset, pieceHeights, pieceHoles);
         Set<Pair<Integer, Integer>> newHoleCoordinates = getHolesCoordinates(col, pieceHoles, newColHeights, pieceHeights, features.holesCords);
         double landingHeight = landingHeight(col, rotatedPiece, newColHeights);
+        double distanceFromCenter = distanceFromCenter(col, rotatedPiece);
         boolean gameOver = false;
 
         if(Compute.max(newColHeights) > height)
@@ -256,10 +265,10 @@ public class TetrisState implements State {
             boolean[][] boardCopy = boardCopy();
             integratePieceIntoBoard(boardCopy, rotatedPiece, col, offset, features.colHeights);
             clearRows(boardCopy, clearedRowsAndCells);
-            return new TetrisFeatures.Builder(height, width, clearedRowsAndCells.getFirst().size(), clearedRowsAndCells.getSecond(), landingHeight, gameOver).oldFeatures(features).board(boardCopy).build();
+            return new TetrisFeatures.Builder(height, width, clearedRowsAndCells.getFirst().size(), clearedRowsAndCells.getSecond(), landingHeight, distanceFromCenter, gameOver).oldFeatures(features).board(boardCopy).build();
         }
 
-        return new TetrisFeatures.Builder(height, width, 0, 0, landingHeight, gameOver).colHeights(newColHeights).holesCords(newHoleCoordinates).oldFeatures(features).build();
+        return new TetrisFeatures.Builder(height, width, 0, 0, landingHeight, distanceFromCenter, gameOver).colHeights(newColHeights).holesCords(newHoleCoordinates).oldFeatures(features).build();
     }
 
     private boolean[][] boardCopy() {
@@ -330,6 +339,12 @@ public class TetrisState implements State {
         int maxNewHeight = maxNewHeight(col, rotatedPiece, newHeights);
         int pieceHeight = rotatedPiece.length;
         return ((double)maxNewHeight - (double)pieceHeight/2);
+    }
+
+    private double distanceFromCenter(int col, boolean[][] rotatedPiece){
+        double center = width/2;
+        double pieceCenter = col + rotatedPiece.length/2;
+        return Math.abs(center - pieceCenter);
     }
 
 
@@ -409,7 +424,7 @@ public class TetrisState implements State {
     }
 
     public TetrisState copy() {
-        return new TetrisState(boardCopy(), piece.copy(), features.nClearedLines, features.nBrickCleared, features.landingHeight, features.gameOver, features.oldFeatures);
+        return new TetrisState(boardCopy(), piece.copy(), features.nClearedLines, features.nBrickCleared, features.landingHeight, features.distanceFromCenter, features.gameOver, features.oldFeatures);
     }
 
     public void print() {
@@ -448,7 +463,7 @@ public class TetrisState implements State {
     public void getEffect(Action a, List<State> sprimes, List<Double> tprobs) {
         for (Tetromino tetromino : pieces) {
             TetrisState sprime = this.copy();
-            sprime.nextState(((TetrisAction) a).col, ((TetrisAction) a).rot, rand, tetromino);
+            sprime.nextState(((TetrisAction) a).col, ((TetrisAction) a).rot, rand, tetromino, true);
             sprimes.add(sprime);
             tprobs.add((double)1/(double)7);
         }
@@ -475,5 +490,9 @@ public class TetrisState implements State {
 
     public Tetromino piece() {
         return piece;
+    }
+
+    public void printFeatures(TetrisFeatures features) {
+        System.out.println("distance from center: "+features.distanceFromCenter);
     }
 }

@@ -29,19 +29,21 @@ public class Dpi {
 
 		Random random = new Random();
 		long seed = random.nextInt();
+//		long seed = 1;
+
 		random = new Random(seed);
 		FeatureSet featureSet = new TetrisFeatureSet("thierry");
-		Game game = new Game(random, new TetrisTaskLines(0.9));
+		Game game = new Game(random, new TetrisTaskLines(1));
 		List<Double> initialWeights = new ArrayList<>();
 		for (String name: game.getFeatureNames(featureSet))
 			initialWeights.add(random.nextGaussian());
 
 
 //		initialWeights = TetrisWeightVector.make("DT10"); best.
-		int numIt = 10;
-		double gamma = 0.9;
-		int sampleSize = 30000;
-		int nrollout = 10;
+		int numIt = 15;
+		double gamma = 1;
+		int sampleSize = 20000;
+		int nrollout = 5;
 		TetrisParameters.getInstance().setSize(10,10);
 
 		setOutput("dpi_"+featureSet.name()+"_"+sampleSize+"_"+arg[0]);
@@ -53,7 +55,7 @@ public class Dpi {
 		else if (arg[0].equals("cum"))
 			actionType = UtilAmpi.ActionType.CUMDOM;
 
-		Dpi dpi = new Dpi(game, featureSet, numIt, sampleSize, nrollout, gamma, initialWeights, actionType, random);
+		Dpi dpi = new Dpi(game, featureSet, numIt, sampleSize, nrollout, gamma, 10, initialWeights, actionType, random);
 		dpi.iterate();
 	}
 
@@ -84,8 +86,9 @@ public class Dpi {
 	public List<Object> rolloutSet = null;
 	Random random;
 	int rounds = 100;
-	int samplingFactor = 3; //Size of the rollout set before subsampling is samplingFactor * rolloutSetSize.
-	Task task = new TetrisTaskLines(0.9);
+	int samplingFactor = 7; //Size of the rollout set before subsampling is samplingFactor * rolloutSetSize.
+	Task task = new TetrisTaskLines(1);
+	int cmaesIterations;
 
 	final FeatureSet paretoFeatureSet = new TetrisFeatureSet("bcts");
 	//	final double[] paretoWeights = new double[]{-13.08, -19.77, -9.22, -10.49, 6.60, -12.63, -24.04, -1.61};
@@ -93,7 +96,7 @@ public class Dpi {
 
 
 	public Dpi(Game game, FeatureSet featureSetClassification, int maxSim,
-			   int rolloutSetSize, int nRollout, double gamma, List<Double> betaCl,
+			   int rolloutSetSize, int nRollout, double gamma, int cmaesIterations, List<Double> betaCl,
 			   UtilAmpi.ActionType actionTypeCla, Random random) {
 		// beta is stateAction features, and theta is state features
 		System.out.println("TetrisBoard:" + TetrisState.height+"x"+TetrisState.width);
@@ -102,10 +105,14 @@ public class Dpi {
 		System.out.println("Sample size:" + rolloutSetSize);
 		System.out.println("Rollout length:" + nRollout);
 		System.out.println("Feature set: " +featureSetClassification.name());
+		System.out.println("gamma: " + gamma);
+		System.out.println("Action type: " + actionTypeCla);
 		System.out.println("fixing seed for rollouts");
+//		System.out.println("picking cmaes run based on score");
 		this.game = game;
 		this.featureSetClassification = featureSetClassification;
 		this.maxSim = maxSim;
+		this.cmaesIterations = cmaesIterations;
 		this.rolloutSetSize = rolloutSetSize;
 		this.nRollout = nRollout;
 		this.gamma = gamma;
@@ -119,7 +126,7 @@ public class Dpi {
 		double[] betaVector = new double[betaCl.size()];
 		for (int i = 0; i < betaVector.length; i++)
 			betaVector[i] = betaCl.get(i);
-		EvaluateLinearAgent.gamesTetris(100, random, featureSetClassification, betaCl, actionType, paretoFeatureSet, paretoWeights, true);
+		EvaluateTetrisAgent.gamesTetris(100, random, featureSetClassification, betaCl, actionType, paretoFeatureSet, paretoWeights, true);
 		System.out.println("****************************");
 	}
 
@@ -127,16 +134,21 @@ public class Dpi {
 	public List<Double> iterate() {
 		for (int k = 0; k < this.maxSim; k++) {
 			long t0 = System.currentTimeMillis();
-			if(k==0 && firstRolloutBcts){//Take first rollout set from good policy.
-				this.rolloutSet = RolloutUtil.getRolloutSetTetris(this.game, this.rolloutSetSize * samplingFactor, Arrays.asList(new Double[]{ -13.08,-19.77,-9.22,-10.49,6.60,-12.63,-24.04,-1.61,0.}), new TetrisFeatureSet("thierry"), actionType, paretoFeatureSet, paretoWeights, random);
-			}else {
-				this.rolloutSet = RolloutUtil.getRolloutSetTetris(this.game, this.rolloutSetSize * samplingFactor, this.betaCl, this.featureSetClassification, actionType, paretoFeatureSet, paretoWeights, random);
-			}
+			if(!subsampingUniformHeight)
+				samplingFactor = 1;
+
+//			if(k==0 && firstRolloutBcts){//Take first rollout set from good policy.
+//				this.rolloutSet = RolloutUtil.getRolloutSetTetris(this.game, this.rolloutSetSize * samplingFactor, Arrays.asList(new Double[]{ -13.08,-19.77,-9.22,-10.49,6.60,-12.63,-24.04,-1.61,0.}), new TetrisFeatureSet("thierry"), actionType, paretoFeatureSet, paretoWeights, random);
+//				this.rolloutSet = RolloutUtil.getRolloutSetTetrisGabillon("src/main/resources/tetris/rawGames/sample_gabillon/record_du10++cat.txt", random);
+				this.rolloutSet = RolloutUtil.getRolloutSetTetrisGabillon("gabillon_sample/record_du10++cat.txt", random, this.rolloutSetSize);
+//			}else {
+//				this.rolloutSet = RolloutUtil.getRolloutSetTetris(this.game, this.rolloutSetSize * samplingFactor, this.betaCl, this.featureSetClassification, actionType, paretoFeatureSet, paretoWeights, random);
+//			}
 
 			if(subsampingUniformHeight)
 				this.rolloutSet = UtilAmpi.getSubSampleWithUniformHeightNewTetris(rolloutSet, this.rolloutSetSize);
 
-			System.out.println(String.format("sampling rollout set took: %s seconds", (System.currentTimeMillis() - t0) / (1000.0)));
+			System.out.println(String.format("sampling rollout set (%s samples) took: %s seconds", rolloutSet.size(), (System.currentTimeMillis() - t0) / (1000.0)));
 
 			long t1 = System.currentTimeMillis();
 			ObjectiveFunction of = new ObjectiveFunction();
@@ -163,7 +175,7 @@ public class Dpi {
 			double[] betaVector = new double[betaCl.size()];
 			for (int i = 0; i < betaVector.length; i++)
 				betaVector[i] = betaCl.get(i);
-			EvaluateLinearAgent.gamesTetris(rounds, random, featureSetClassification, betaCl, actionType, paretoFeatureSet, paretoWeights, true);
+			EvaluateTetrisAgent.gamesTetris(rounds, random, featureSetClassification, betaCl, actionType, paretoFeatureSet, paretoWeights, true);
 			System.out.println(String.format("This iteration took: %s seconds", (System.currentTimeMillis() - t0) / (1000.0)));
 			System.out.println("****************************");
 		}
@@ -181,17 +193,25 @@ public class Dpi {
 
 //		((TetrisState)state).print();
 		long rolloutSeed = random.nextInt();
+		double maxQEstimate = Double.NEGATIVE_INFINITY;
+		double minQEstimate = Double.POSITIVE_INFINITY;
 		for (Pair<Action,List<Double>> action : actions) {
-				Random rolloutRandom = new Random(rolloutSeed);
 				Pair<Object, Action> stateAction = new Pair<>(state, action.getFirst());
 					features.add(action.getSecond());
 //			Pair<Object, Double> stateReward = this.game.getNewStateAndReward(state, action.getFirst());
 				double qEstimate = 0;
 				int averageOver = 1;
 				for (int i = 0; i < averageOver; i++) {
+					Random rolloutRandom = new Random(rolloutSeed+i);
 					qEstimate = qEstimate + RolloutUtil.doRolloutTetrisIterative(stateAction, nrollout, betaReg, betaCl,
-							gamma, featureSetClassification, featureSetClassification, rolloutRandom, task);
+							gamma, featureSetClassification, featureSetClassification, rolloutRandom, task, actionType, paretoFeatureSet, paretoWeights);
 				}
+				if(qEstimate > maxQEstimate)
+					maxQEstimate = qEstimate;
+
+				if(qEstimate < minQEstimate)
+					minQEstimate = qEstimate;
+
 				utils.add(qEstimate / averageOver);
 		}
 //		List<Double> normalizedUtils = new ArrayList<>();
@@ -208,6 +228,8 @@ public class Dpi {
 //			}
 //		}
 //		return new Pair<>(features, normalizedUtils);
+		if(maxQEstimate == minQEstimate)
+			utils = new ArrayList<>();
 		return new Pair<>(features, utils);
 	}
 
@@ -216,9 +238,10 @@ public class Dpi {
 	private List<Double> minimizeUsingCMAES(ObjectiveFunction fitfun){
 		fitfun.printMaxQEstimate();
 		double leastFitness = Double.MAX_VALUE;
+		int maxScore = 0;
 		double[] x = new double[game.getFeatureNames(featureSetClassification).size()];
 //		List<Double> dt10 = TetrisWeightVector.make("DT10");
-		for (int iter = 0; iter < 5; iter++) {
+		for (int iter = 0; iter < cmaesIterations; iter++) {
 			double[] betaVector = new double[betaCl.size()];
 
 			for (int i = 0; i < betaVector.length; i++) {
@@ -238,8 +261,9 @@ public class Dpi {
 		//			cma.readProperties(); // read options, see file CMAEvolutionStrategy.properties
 					cma.setDimension(game.getFeatureNames(featureSetClassification).size()); // overwrite some loaded properties
 					cma.setInitialX(betaVector); // in each dimension, also setTypicalX can be used
-					cma.setInitialStandardDeviation(.001); // also a mandatory setting
+					cma.setInitialStandardDeviation(.5); // also a mandatory setting
 					cma.options.stopFitness = 1e-14;       // optional setting
+					cma.options.stopMaxIter = 15 * betaVector.length;
 					cma.options.verbosity = 0;
 					cma.options.writeDisplayToFile = 0;
 
@@ -281,16 +305,22 @@ public class Dpi {
 		//			cma.println();
 					CMASolution solution = cma.getBestSolution();
 
-
+//					double[] tempx = solution.getX();
+//					System.out.println("cma loss :" +solution.getFitness());
+//					Double[] doubleArray = ArrayUtils.toObject(tempx);
+//					int mean = EvaluateLinearAgent.gamesTetris(100, random, featureSetClassification, Arrays.asList(doubleArray), actionType, paretoFeatureSet, paretoWeights, false);
+//					System.out.println("**** performance in 100 rounds for this iteration of cmaes (mean):" + mean + " loss: "+ solution.getFitness());
 
 					if(solution.getFitness() <= leastFitness){
+//					if(mean > maxScore){
 						x = solution.getX();
+//						maxScore = mean;
 						leastFitness = solution.getFitness();
 					}
 			} finally {
 				System.setOut(out);
 			}
-			System.out.println("cmaes optimizer loss " + leastFitness);
+			System.out.println("cmaes optimizer least loss :" + leastFitness);
 		}
 		Double[] doubleArray = ArrayUtils.toObject(x);
 		double[] betaArray = new double[betaCl.size()];
@@ -322,15 +352,17 @@ public class Dpi {
 					int[] bestActions = getBestActionIndex(choice.getFirst(), x);
 					double policyQEstimate = 0;
 //					double leastValue = Double.POSITIVE_INFINITY;
-					for (int i = 0; i < bestActions.length; i++)
+					for (int i = 0; i < bestActions.length; i++) {
 						policyQEstimate += choice.getSecond().get(bestActions[i]);
-
+//						if(choice.getSecond().get(bestActions[i]) < leastValue)
+//							leastValue = choice.getSecond().get(bestActions[i]);
+					}
 //					policyQEstimate = leastValue;
 					policyQEstimate = policyQEstimate/bestActions.length;
-					value += Math.abs(maxQEstimate - policyQEstimate);
+					value += (maxQEstimate - policyQEstimate)/trainingSet.size();
 //					value += maxQEstimate - choice.getSecond().get(bestAction);
 			}
-			return value/trainingSet.size();
+			return value;
 		}
 
 
@@ -369,6 +401,7 @@ public class Dpi {
 				value += maxQEstimate;
 			}
 			System.out.println(" MaxQEstimate: "+value);
+			System.out.println(" Number of Choices: "+trainingSet.size());
 		}
 	}
 

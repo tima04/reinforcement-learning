@@ -2,6 +2,7 @@ package util;
 
 
 import domains.tetris.TetrisState;
+import domains.tetris.helpers.ApproximateDominanceSpec;
 import org.apache.commons.math3.linear.DecompositionSolver;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
@@ -19,7 +20,14 @@ public class UtilAmpi {
 		ANY,
 		DOM,
 		CUMDOM,
-		SINGLE_CUE
+		SINGLE_CUE,
+		APPROX_DOM_095,
+		APPROX_DOM_098,
+		APPROX_DOM_099,
+		APPROX_CUMDOM_095,
+		APPROX_CUMDOM_098,
+		APPROX_CUMDOM_099
+
 	}
 
 	public static int[] ArrayDoubletoInt(double[] doubles) {
@@ -198,6 +206,13 @@ public static <T> T randomChoice(List<T> xs) {
 			is_pareto = LinearDecisionRule.paretoDominanceSet(weights, objects);
 		else if(actionType.equals(ActionType.CUMDOM))
 			is_pareto = LinearDecisionRule.paretoCumDominanceSet(weights, objects);
+		else if(actionType.equals(ActionType.APPROX_CUMDOM_095)) {
+			Pair<List<Integer>, List<Integer>> approxSpecification = ApproximateDominanceSpec.get(0.95);
+			is_pareto = LinearDecisionRule.paretoCumDominanceApprSet(weights, objects, approxSpecification.getFirst(), approxSpecification.getSecond());
+		}else if(actionType.equals(ActionType.APPROX_DOM_095)) {
+			Pair<List<Integer>, List<Integer>> approxSpecification = ApproximateDominanceSpec.get(0.95);
+			is_pareto = LinearDecisionRule.paretoDominanceApprSet(weights, objects, approxSpecification.getFirst(), approxSpecification.getSecond());
+		}
 
 		return is_pareto;
 	}

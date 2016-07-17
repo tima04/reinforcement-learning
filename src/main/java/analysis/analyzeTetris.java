@@ -209,13 +209,16 @@ public class analyzeTetris {
 
     public static Pair<TetrisState, TetrisAction> parseLine(String line){
         String[] splittedLine = line.split(",");
-        TetrisState state = TetrisState.parseState(splittedLine[0]);
-        TetrisAction action = new TetrisAction(0, 0);
-        if(splittedLine[1].split("_").length == 2) { //SECOND PART OF LINE IS ACTION
-            String[] splittedAction = splittedLine[1].split("_");
-            action = new TetrisAction(Integer.parseInt(splittedAction[0]), Integer.parseInt(splittedAction[1]));
+        if(splittedLine.length != 0){
+            TetrisState state = TetrisState.parseState(splittedLine[0]);
+            TetrisAction action = new TetrisAction(0, 0);
+            if(splittedLine[1].split("_").length == 2) { //SECOND PART OF LINE IS ACTION
+                String[] splittedAction = splittedLine[1].split("_");
+                action = new TetrisAction(Integer.parseInt(splittedAction[0]), Integer.parseInt(splittedAction[1]));
+            }
+            return new Pair(state, action);
         }
-        return new Pair(state, action);
+        return null;
     }
 
     private static void closeAnalysis(List<Analysis> analysisList) {

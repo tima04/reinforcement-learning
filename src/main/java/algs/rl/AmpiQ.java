@@ -26,7 +26,7 @@ public class AmpiQ {
 		FeatureSet featureSet = new TetrisFeatureSet("lagoudakisthierry");
 		Game game = new Game(random, new TetrisTaskLines(0.9));
 		List<Double> initialWeights = new ArrayList<>();
-		TetrisParameters.getInstance().setSize(10,10);
+		TetrisParameters.getInstance().setSize(16,10);
 		for (String name: game.getFeatureNames(featureSet)){
 			initialWeights.add(-0.);
 		};
@@ -34,7 +34,7 @@ public class AmpiQ {
 
 		int numIt = 30;
 		double gamma = 0.9;
-		int sampleSize = 10000;
+		int sampleSize = 20000;
 		int nrollout = 15;
 		setOutput("ampiq_"+featureSet.name()+"_"+sampleSize+"_"+arg[0]);
 		UtilAmpi.ActionType  actionType = UtilAmpi.ActionType.ANY;
@@ -42,6 +42,10 @@ public class AmpiQ {
 			actionType = UtilAmpi.ActionType.DOM;
 		else if (arg[0].equals("cum"))
 			actionType = UtilAmpi.ActionType.CUMDOM;
+		else if (arg[0].equals("cum095"))
+			actionType = UtilAmpi.ActionType.APPROX_CUMDOM_095;
+		else if (arg[0].equals("dom095"))
+			actionType = UtilAmpi.ActionType.APPROX_DOM_095;
 
 		AmpiQ ampiq = new AmpiQ(game, featureSet, numIt, gamma, initialWeights, sampleSize, nrollout, actionType, random);
 		ampiq.iterate();
@@ -56,8 +60,8 @@ public class AmpiQ {
 		//file = file + System.currentTimeMillis();
 		try {
 			System.out.println(fileName);
-			System.setOut(new PrintStream(new File("src/main/resources/tetris/scores/ampiq/"+fileName)));
-//			System.setOut(new PrintStream(new File("scores/ampiq/"+fileName)));
+//			System.setOut(new PrintStream(new File("src/main/resources/tetris/scores/ampiq/"+fileName)));
+			System.setOut(new PrintStream(new File("scores/ampiq/"+fileName)));
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -86,6 +90,7 @@ public class AmpiQ {
 		System.out.println("TetrisBoard:" + TetrisState.height+"x"+TetrisState.width);
 		System.out.println("Sample size:" + rolloutSetSize);
 		System.out.println("Rollout length:" + nRollout);
+		System.out.println("Action Type:" + rolloutActionType);
 		System.out.println("rollout iterative");
 		this.game = game;
 		this.featureSet = featureSet;
@@ -107,7 +112,7 @@ public class AmpiQ {
 		for (int i = 0; i < betaVector.length; i++) {
 			betaVector[i] = beta.get(i);
 		}
-		EvaluateLinearAgent.gamesTetris(1, random, featureSet, beta, rolloutActionType,  paretoFeatureSet, paretoWeights, true);
+		EvaluateTetrisAgent.gamesTetris(1, random, featureSet, beta, rolloutActionType,  paretoFeatureSet, paretoWeights, true);
 		System.out.println("****************************");
 	}
 
@@ -128,7 +133,7 @@ public class AmpiQ {
 
 				List<Double> x = this.game.getFeatureValues(featureSet, state, action);
 				Pair<Object, Action> sa = new Pair<>(state, action);
- 				double y = RolloutUtil.doRolloutTetrisIterative(sa, this.nRollout, beta, beta, gamma, featureSet, featureSet, random, task);
+ 				double y = RolloutUtil.doRolloutTetrisIterative(sa, this.nRollout, beta, beta, gamma, featureSet, featureSet, random, task, rolloutActionType, paretoFeatureSet, paretoWeights);
 				xs[i] = ArrayUtils.toPrimitive(x.toArray(new Double[x.size()]));
 				ys[i] = y;
 			}
@@ -148,13 +153,13 @@ public class AmpiQ {
 
 			// log
 			System.out.println("****************************");
-			int round = 20;
+			int round = 100;
 			System.out.println(String.format("performance in %s rounds: ", round));
 			double[] betaVector = new double[beta.size()];
 			for (int i = 0; i < betaVector.length; i++) {
 				betaVector[i] = beta.get(i);
 			}
-			EvaluateLinearAgent.gamesTetris(round, random, featureSet, beta, rolloutActionType, paretoFeatureSet,  paretoWeights, true);
+			EvaluateTetrisAgent.gamesTetris(round, random, featureSet, beta, rolloutActionType, paretoFeatureSet,  paretoWeights, true);
 			System.out.println(String.format("This iteration took: %s seconds", (System.currentTimeMillis() - t0)/(1000.0)));
 			System.out.println("****************************");
 		}

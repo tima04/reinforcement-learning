@@ -42,7 +42,7 @@ public class MultiPareto implements PickAction{
      * @param actionFeatures
      * @return
      */
-    public int pick(State state, List<Pair<Action, Features>> actionFeatures){
+    public int[] pick(State state, List<Pair<Action, Features>> actionFeatures){
 
         double[][] objects = new double[actionFeatures.size()][weights.length];
 
@@ -95,6 +95,6 @@ public class MultiPareto implements PickAction{
         if(votes[indicesOfMax[0]] < 2)//If intersection is empty we choose from the complete pareto cum set.
             return pareto.pick(state, actionFeatures);
 
-        return indicesOfMax[random.nextInt(indicesOfMax.length)];
+        return indicesOfMax;
     }
 }

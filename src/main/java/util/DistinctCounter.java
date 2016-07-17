@@ -4,9 +4,6 @@ import java.util.List;
 
 public class DistinctCounter {
 
-
-
-
     public static int howManyDistinct(double[][] objects){
         List<double[]> distinctFeatureSets = new ArrayList<>();
         for (int i = 0; i < objects.length; i++) {

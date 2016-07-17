@@ -25,8 +25,8 @@ public class playTetris {
 //        weights.add(-12.63);
 //        weights.add(-24.04);
 //        weights.add(-1.61);
-
-        weights = Arrays.asList(-3.064882301234735, 0.9696923607539406, -0.9188727656231099, -1.7511886618412267, -0.9298877590132281, -1.266237876496904, -0.6619945964629006, -4.10221875899607, 0.5116115645328031);
+            weights = TetrisWeightVector.make("bcts");
+//        weights = Arrays.asList(-3.064882301234735, 0.9696923607539406, -0.9188727656231099, -1.7511886618412267, -0.9298877590132281, -1.266237876496904, -0.6619945964629006, -4.10221875899607, 0.5116115645328031);
         double[] paretoWeights = new double[]{-5, -6, -2, -3, 1, -4, -7, -1}; //It should have the same effect as bcts since the direction and order are the same.
         int[] paretoSigns = new int[]{-1, -1, -1, -1, 1, -1, -1, -1};
 
@@ -62,12 +62,8 @@ public class playTetris {
 //                "apprdom0.99.txt");
 
 
-//        playGames(10000, new SingleCueTallyRest(paretoSigns, 6, new TetrisFeatureSet("bcts"), random), random);
-        playGames(100, new LinearPick(weights, new TetrisFeatureSet("thierry"), random), random, "");
-        playGames(100, new LinearPick(weights, new TetrisFeatureSet("thierry"), random), random, "");
-        playGames(100, new LinearPick(weights, new TetrisFeatureSet("thierry"), random), random, "");
-        playGames(100, new LinearPick(weights, new TetrisFeatureSet("thierry"), random), random, "");
-        playGames(100, new LinearPick(weights, new TetrisFeatureSet("thierry"), random), random, "");
+        playGames(100, new SingleCueTallyRest(new int[]{-1,-1,1}, 0, new TetrisFeatureSet("people"), random), random, "");
+//        playGames(100, new LinearPick(weights, new TetrisFeatureSet("bcts"), random), random, "");
 //        playSteps(10000, new LinearPick(weights, new TetrisFeatureSet("bcts"), random), random);
 //        playGames(10, new MultiPareto(paretoWeights, new TetrisFeatureSet("bcts"), random), cueGroups, UtilAmpi.ActionType.CUMDOM, random), random);
 //        playGames(1000, new SingleCue(-1, 6, new TetrisFeatureSet("bcts"), random), 3, random, new TetrisTaskLines(0.9)), random);
@@ -98,19 +94,20 @@ public class playTetris {
                     break;
                 }
 
-                int actionIndex = pickAction.pick(state, actions);
+                int[] actionIndices = pickAction.pick(state, actions);
+                int actionIndex = actionIndices[random.nextInt(actionIndices.length)];
                 TetrisAction action  = (TetrisAction) actions.get(actionIndex).getFirst();
 //                detailedReport.addLine(state.getString()+","+action.col+"_"+action.rot);
 //                detailedReport.generate();
                 state.nextState(action.col, action.rot, random);
-//                state.print();
-//                state.printFeatures(state.features);
+                state.print();
+                state.printFeatures(state.features);
 //                System.out.println(state.getString());
                 score += state.features.nClearedLines;
             }
             scoreReport.addLine(game+","+score+","+steps);
-//            System.out.println("_____________");
-//            System.out.println("lines cleared: "+score);
+            System.out.println("_____________");
+            System.out.println("lines cleared: "+score);
             totalScore = totalScore + score;
 //            System.out.println("Time spent: " + (System.currentTimeMillis() - t0)/60000. + " minutes");
 
@@ -143,7 +140,8 @@ public class playTetris {
                     break;
                 }
 
-                int actionIndex = pickAction.pick(state, actions);
+                int[] actionIndices = pickAction.pick(state, actions);
+                int actionIndex = actionIndices[random.nextInt(actionIndices.length)];
                 TetrisAction action  = (TetrisAction) actions.get(actionIndex).getFirst();
 //                detailedReport.addLine(state.getString()+","+action.col+"_"+action.rot);
 //                detailedReport.generate();

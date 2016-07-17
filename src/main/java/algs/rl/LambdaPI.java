@@ -3,9 +3,7 @@ package algs.rl;
 
 import algs.Game;
 import domains.FeatureSet;
-import domains.tetris.EvaluateLinearAgent;
-import domains.tetris.TetrisFeatureSet;
-import domains.tetris.TetrisTaskLines;
+import domains.tetris.*;
 import org.apache.commons.math3.linear.SingularMatrixException;
 import util.UtilAmpi;
 
@@ -34,14 +32,19 @@ public class LambdaPI {
 		double gamma = 0.9;
 		double lambda = 0.9;
 		int sampleSize = 100000;
-		setOutput("lpi_"+featureSet+"_"+sampleSize+"_"+lambda+"_"+arg[0]);
+		setOutput("lpi_"+featureSet.name()+"_"+sampleSize+"_"+lambda+"_"+arg[0]);
 		UtilAmpi.ActionType  actionType = UtilAmpi.ActionType.ANY;
 		if(arg[0].equals("dom"))
 			actionType = UtilAmpi.ActionType.DOM;
 		else if (arg[0].equals("cum"))
 			actionType = UtilAmpi.ActionType.CUMDOM;
+		else if (arg[0].equals("cum095"))
+			actionType = UtilAmpi.ActionType.APPROX_CUMDOM_095;
+		else if (arg[0].equals("dom095"))
+			actionType = UtilAmpi.ActionType.APPROX_DOM_095;
 
 		Random random = new Random();
+		TetrisParameters.getInstance().setSize(16,10);
 		LambdaPI lambdaPI = new LambdaPI(new Game(random, new TetrisTaskLines(0.9)), featureSet, numIt, gamma, lambda, initialWeights, sampleSize, actionType, random);
 		lambdaPI.iterate();
 	}
@@ -80,7 +83,11 @@ public class LambdaPI {
 	public LambdaPI(Game game, FeatureSet featureSet, int maxSim,
 					double gamma, double lambda, List<Double> beta, int sampleSize,
 					UtilAmpi.ActionType actionType, Random random) {
-
+		System.out.println("TetrisBoard:" + TetrisState.height+"x"+TetrisState.width);
+		System.out.println("Lambda Policy Iteration");
+		System.out.println("Sample Size: " + sampleSize);
+		System.out.println("Lambda: " + lambda);
+		System.out.println("Action Type: " + actionType);
 		this.game = game;
 		this.maxSim = maxSim;
 		this.gamma = gamma;
@@ -99,12 +106,12 @@ public class LambdaPI {
 		double[] betaVector = new double[beta.size()];
 		for (int i = 0; i < betaVector.length; i++)
 			betaVector[i] = beta.get(i);
-		EvaluateLinearAgent.gamesTetris(100, random, featureSet, beta, actionType, paretoFeatureSet, paretoWeights, true);
+		EvaluateTetrisAgent.gamesTetris(100, random, featureSet, beta, actionType, paretoFeatureSet, paretoWeights, true);
 		System.out.println("****************************");
 	}
 
 
-	public void iterate() {
+	public List<Double> iterate() {
 		for (int i = 0; i < maxSim; i++) {
 			long t0 = System.currentTimeMillis();
 
@@ -163,10 +170,11 @@ public class LambdaPI {
 			int round = 100;
 			System.out.println("****************************");
 			System.out.println(String.format("performance in %s rounds: ", round));
-			EvaluateLinearAgent.gamesTetris(round, random, featureSet, beta, actionType, paretoFeatureSet, paretoWeights, true);
+			EvaluateTetrisAgent.gamesTetris(round, random, featureSet, beta, actionType, paretoFeatureSet, paretoWeights, true);
 			System.out.println(String.format("This iteration took: %s seconds", (System.currentTimeMillis() - t0)/(1000.0)));
 			System.out.println("****************************");
 		}
+		return beta;
 	}
 
 	private double calculateDt(Object state, double stateEstimatedValue, double stateBeforeEstimatedValue) {

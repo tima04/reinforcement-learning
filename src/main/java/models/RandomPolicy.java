@@ -23,8 +23,8 @@ public class RandomPolicy implements Policy {
 	}
 
 	@Override
-	public boolean isGreedyAction(State s, Action a) {
-		return false;
+	public double isGreedyAction(State s, Action a) {
+		return 0;
 	}
 
 }
