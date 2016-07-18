@@ -148,7 +148,7 @@ public class MaxEntTetris {
                 initWeightsDpi,
                 UtilAmpi.ActionType.ANY,
                 random);
-        dpi.setRounds(1);
+        dpi.setRounds(0);
         dpi.setTask(task);
         List<Double> weights = dpi.iterate();
         System.out.println("DPI done");

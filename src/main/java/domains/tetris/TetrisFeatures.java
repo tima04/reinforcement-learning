@@ -19,6 +19,7 @@ public class TetrisFeatures implements Features {
 	public final int width; //board width
 	public final int[] colHeights;
 	public final int[] colHeightsDiff;
+	public final double[] rbf;
 	public final Set<Pair<Integer, Integer>> holesCords;
 	public final int colTransition;
 	public final int rowTransition;
@@ -104,6 +105,9 @@ public class TetrisFeatures implements Features {
 			this.sumHeightDiffDeltaSoft = 0;
 			this.averageHeightDelta = 0;
 		}
+		this.rbf = new double[5];
+		for (int i = 0; i < 5; i++)
+			rbf[i] = Math.exp(-1*Math.pow(averageHeight-i*height/4,2)/Math.pow(2*(height/5),2));
 
 	}
 

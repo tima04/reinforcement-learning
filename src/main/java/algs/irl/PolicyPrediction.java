@@ -134,9 +134,9 @@ public class PolicyPrediction {
         Policy policyLex = lex.fitPolicy(trainingSet, fs, random, numCues);
         System.out.println("***** features");
         System.out.println("Lex: Accuracy individual decisions (fitting): ");
-        predictIndividualDecisions(policyLex, trainingSet, ","+suffix+",fitting,lex_"+numCues, display);
+        predictIndividualDecisions(policyLex, trainingSet, ","+suffix+",fitting,0,lex_"+numCues, display);
         System.out.println("Lex: Accuracy individual decisions (prediction): ");
-        predictIndividualDecisions(policyLex, testSet, ","+suffix+",prediction,lex_"+numCues, display);
+        predictIndividualDecisions(policyLex, testSet, ","+suffix+",prediction,0,lex_"+numCues, display);
         System.out.println("*****");
         System.out.println("Score:");
         EvaluateTetrisAgent.gamesTetris(100, random, policyLex, true);

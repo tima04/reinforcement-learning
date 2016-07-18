@@ -36,6 +36,21 @@ public class TetrisFeatureSet implements FeatureSet{
             values.add((double)tetrisFeatures.holesDepth);
             values.add((double)tetrisFeatures.nRowsWithHoles);
             values.add((double)tetrisFeatures.nPatternDiversity);
+        }else if(featureSet.equals("thierryrbf")){
+            values.add(tetrisFeatures.landingHeight);
+            values.add((double)tetrisFeatures.nErodedCells);
+            values.add((double)tetrisFeatures.rowTransition);
+            values.add((double)tetrisFeatures.colTransition);
+            values.add((double)tetrisFeatures.nHoles);
+            values.add((double)tetrisFeatures.cumWells);
+            values.add((double)tetrisFeatures.holesDepth);
+            values.add((double)tetrisFeatures.nRowsWithHoles);
+            values.add((double)tetrisFeatures.nPatternDiversity);
+            values.add((double)tetrisFeatures.rbf[0]);
+            values.add((double)tetrisFeatures.rbf[1]);
+            values.add((double)tetrisFeatures.rbf[2]);
+            values.add((double)tetrisFeatures.rbf[3]);
+            values.add((double)tetrisFeatures.rbf[4]);
         }else if(featureSet.equals("bcts")){
             values.add((double)tetrisFeatures.nHoles);
             values.add((double)tetrisFeatures.colTransition);
@@ -149,7 +164,6 @@ public class TetrisFeatureSet implements FeatureSet{
             values.add((double)tetrisFeatures.cumWells);
         }
 
-
         return values;
     }
 
@@ -166,6 +180,21 @@ public class TetrisFeatureSet implements FeatureSet{
             names.add("holesDepth");
             names.add("nRowsWithHoles");
             names.add("nPatternDiversity");
+        }else if(featureSet.equals("thierryrbf")){
+            names.add("landingHeight");
+            names.add("nErodedCells");
+            names.add("rowTransition");
+            names.add("colTransition");
+            names.add("nHoles");
+            names.add("cumWells");
+            names.add("holesDepth");
+            names.add("nRowsWithHoles");
+            names.add("nPatternDiversity");
+            names.add("rbf_0");
+            names.add("rbf_1");
+            names.add("rbf_2");
+            names.add("rbf_3");
+            names.add("rbf_4");
         }else if(featureSet.equals("bcts")){
             names.add("nHoles");
             names.add("colTransition");

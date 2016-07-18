@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 public class EvaluateTetrisAgent {
 
     public static int gamesTetris(int numGames, Random random, FeatureSet featureSet, List<Double> weights, UtilAmpi.ActionType actionType, FeatureSet paretoFeatureSet, double[] paretoWeights, boolean display) {
+        if(numGames == 0) return 0;
         int totalScore = 0;
         int maxScore = 0;
         int minScore = Integer.MAX_VALUE;

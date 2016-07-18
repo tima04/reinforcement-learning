@@ -32,16 +32,16 @@ public class Cbmpi {
 //		long seed = -391127942;
 		random = new Random(seed);
 		FeatureSet featureSetPolicy = new TetrisFeatureSet("thierry");
-		FeatureSet featureSetValue = new TetrisFeatureSet("thierry");
-		Game game = new Game(random, new TetrisTaskLines(0.9));
+		FeatureSet featureSetValue = new TetrisFeatureSet("thierryrbf");
+		Game game = new Game(random, new TetrisTaskLines(1));
 		List<Double> initialWeights = new ArrayList<>();
 		for (String name: game.getFeatureNames(featureSetPolicy))
 			initialWeights.add(-0.);
 
 
 		int numIt = 10;
-		double gamma = 0.9;
-		int sampleSize = 35000;
+		double gamma = 1;
+		int sampleSize = 10000;
 		int nrollout = 5;
 		TetrisParameters.getInstance().setSize(10,10);
 
@@ -54,8 +54,8 @@ public class Cbmpi {
 		else if (arg[0].equals("cum"))
 			actionType = UtilAmpi.ActionType.CUMDOM;
 
-		Cbmpi dpi = new Cbmpi(game, featureSetValue, featureSetPolicy, numIt, sampleSize, nrollout, gamma, initialWeights, actionType, random);
-		dpi.iterate();
+		Cbmpi cbmpi = new Cbmpi(game, featureSetValue, featureSetPolicy, numIt, sampleSize, nrollout, gamma, initialWeights, actionType, random);
+		cbmpi.iterate();
 	}
 
 	private static void setOutput(String fileName) {
@@ -115,7 +115,7 @@ public class Cbmpi {
 		this.rolloutSetSize = rolloutSetSize;
 		this.nRollout = nRollout;
 		this.gamma = gamma;
-		this.betaReg = new ArrayList<>(Collections.nCopies(betaCl.size(), 0.));
+		this.betaReg = new ArrayList<>(Collections.nCopies(featureSetValue.featureNames().size(), 0.));
 		this.betaCl = betaCl;
 		this.rolloutSet = new ArrayList<Object>();
 		this.actionType = actionTypeCla;
@@ -133,11 +133,13 @@ public class Cbmpi {
 	public List<Double> iterate() {
 		for (int k = 0; k < this.maxSim; k++) {
 			long t0 = System.currentTimeMillis();
-			if(k==0 && firstRolloutBcts){//Take first rollout set from good policy.
-				this.rolloutSet = RolloutUtil.getRolloutSetTetris(this.game, this.rolloutSetSize * samplingFactor, Arrays.asList(new Double[]{ -13.08,-19.77,-9.22,-10.49,6.60,-12.63,-24.04,-1.61,0.}), new TetrisFeatureSet("thierry"), actionType, paretoFeatureSet, paretoWeights, random);
-			}else {
-				this.rolloutSet = RolloutUtil.getRolloutSetTetris(this.game, this.rolloutSetSize * samplingFactor, this.betaCl, this.featureSetClassification, actionType, paretoFeatureSet, paretoWeights, random);
-			}
+//			if(k==0 && firstRolloutBcts){//Take first rollout set from good policy.
+//				this.rolloutSet = RolloutUtil.getRolloutSetTetris(this.game, this.rolloutSetSize * samplingFactor, Arrays.asList(new Double[]{ -13.08,-19.77,-9.22,-10.49,6.60,-12.63,-24.04,-1.61,0.}), new TetrisFeatureSet("thierry"), actionType, paretoFeatureSet, paretoWeights, random);
+			this.rolloutSet = RolloutUtil.getRolloutSetTetrisGabillon("src/main/resources/tetris/rawGames/sample_gabillon/record_du10++cat.txt", random, this.rolloutSetSize);
+
+//			}else {
+//				this.rolloutSet = RolloutUtil.getRolloutSetTetris(this.game, this.rolloutSetSize * samplingFactor, this.betaCl, this.featureSetClassification, actionType, paretoFeatureSet, paretoWeights, random);
+//			}
 
 			if(subsampingUniformHeight)
 				this.rolloutSet = UtilAmpi.getSubSampleWithUniformHeightNewTetris(rolloutSet, this.rolloutSetSize);
@@ -331,11 +333,22 @@ public class Cbmpi {
 		public double valueOf(double[] x) {
 			double value = 0;
 			for (Pair<List<List<Double>>, List<Double>> choice : trainingSet){
-					int bestAction = getBestActionIndex_fast(choice.getFirst(), x);
-					double maxQEstimate = Collections.max(choice.getSecond());
-					value += maxQEstimate - choice.getSecond().get(bestAction);
+//					int bestAction = getBestActionIndex_fast(choice.getFirst(), x);
+				double maxQEstimate = Collections.max(choice.getSecond());
+				int[] bestActions = getBestActionIndex(choice.getFirst(), x);
+				double policyQEstimate = 0;
+//					double leastValue = Double.POSITIVE_INFINITY;
+				for (int i = 0; i < bestActions.length; i++) {
+					policyQEstimate += choice.getSecond().get(bestActions[i]);
+//						if(choice.getSecond().get(bestActions[i]) < leastValue)
+//							leastValue = choice.getSecond().get(bestActions[i]);
+				}
+//					policyQEstimate = leastValue;
+				policyQEstimate = policyQEstimate/bestActions.length;
+				value += (maxQEstimate - policyQEstimate)/trainingSet.size();
+//					value += maxQEstimate - choice.getSecond().get(bestAction);
 			}
-			return value/trainingSet.size();
+			return value;
 		}
 
 
@@ -353,13 +366,13 @@ public class Cbmpi {
 			return idx;
 		}
 
-		private int getBestActionIndex(List<List<Double>> actions, double[] x){
+		private int[] getBestActionIndex(List<List<Double>> actions, double[] x){
 			double[] values = new double[actions.size()];
 			for (int i = 0; i < actions.size(); i++)
 				values[i] = UtilAmpi.dotproduct(actions.get(i), x);
 
 			int[] indicesOfMax = Compute.indicesOfMax(values);
-			return indicesOfMax[random.nextInt(indicesOfMax.length)];
+			return indicesOfMax;
 		}
 
 		@Override
