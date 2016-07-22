@@ -1,0 +1,1 @@
+scp build/libs/rl5-all.jar algorta@141.14.164.164:

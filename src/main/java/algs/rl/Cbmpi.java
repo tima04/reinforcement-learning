@@ -22,8 +22,8 @@ import java.util.*;
 
 public class Cbmpi {
 
-	static boolean firstRolloutBcts = true;
-	static boolean subsampingUniformHeight = true;
+	static boolean firstRolloutBcts = false;
+	static boolean subsampingUniformHeight = false;
 
 	public static void main(String[] arg){
 
@@ -39,10 +39,10 @@ public class Cbmpi {
 			initialWeights.add(-0.);
 
 
-		int numIt = 10;
+		int numIt = 20;
 		double gamma = 1;
-		int sampleSize = 10000;
-		int nrollout = 5;
+		int sampleSize = Integer.parseInt(arg[2]);
+		int nrollout = Integer.parseInt(arg[1]);
 		TetrisParameters.getInstance().setSize(10,10);
 
 		setOutput("cbmpi_"+featureSetValue.name()+"_"+featureSetPolicy.name()+"_"+sampleSize+"_"+arg[0]);
@@ -87,9 +87,7 @@ public class Cbmpi {
 	public UtilAmpi.ActionType actionType = null;
 	public List<Object> rolloutSet = null;
 	Random random;
-	Task task = new TetrisTaskLines(0.9);
-
-	int samplingFactor = 3; //Size of the rollout set before subsampling is samplingFactor * rolloutSetSize.
+	Task task = new TetrisTaskLines(1);
 
 	final FeatureSet paretoFeatureSet = new TetrisFeatureSet("bcts");
 	//	final double[] paretoWeights = new double[]{-13.08, -19.77, -9.22, -10.49, 6.60, -12.63, -24.04, -1.61};
@@ -131,18 +129,20 @@ public class Cbmpi {
 
 
 	public List<Double> iterate() {
+		List<Double> paretoWeightsList = new ArrayList<>();
+		for (double paretoWeight : paretoWeights)
+			paretoWeightsList.add(paretoWeight);
+
 		for (int k = 0; k < this.maxSim; k++) {
 			long t0 = System.currentTimeMillis();
 //			if(k==0 && firstRolloutBcts){//Take first rollout set from good policy.
-//				this.rolloutSet = RolloutUtil.getRolloutSetTetris(this.game, this.rolloutSetSize * samplingFactor, Arrays.asList(new Double[]{ -13.08,-19.77,-9.22,-10.49,6.60,-12.63,-24.04,-1.61,0.}), new TetrisFeatureSet("thierry"), actionType, paretoFeatureSet, paretoWeights, random);
-			this.rolloutSet = RolloutUtil.getRolloutSetTetrisGabillon("src/main/resources/tetris/rawGames/sample_gabillon/record_du10++cat.txt", random, this.rolloutSetSize);
-
+//				this.rolloutSet = RolloutUtil.getRolloutSetTetris(this.game, this.rolloutSetSize, paretoWeightsList, new TetrisFeatureSet("thierry"), actionType, paretoFeatureSet, paretoWeights, random);
+//			this.rolloutSet = RolloutUtil.getRolloutSetTetrisGabillon("src/main/resources/tetris/rawGames/sample_gabillon/record_du10++cat.txt", random, this.rolloutSetSize);
+//				this.rolloutSet = RolloutUtil.getRolloutSetTetrisGabillon("gabillon_sample/record_du10++cat.txt", random, this.rolloutSetSize);
 //			}else {
-//				this.rolloutSet = RolloutUtil.getRolloutSetTetris(this.game, this.rolloutSetSize * samplingFactor, this.betaCl, this.featureSetClassification, actionType, paretoFeatureSet, paretoWeights, random);
+				this.rolloutSet = RolloutUtil.getRolloutSetTetris(this.game, this.rolloutSetSize, this.betaCl, this.featureSetClassification, actionType, paretoFeatureSet, paretoWeights, random);
 //			}
 
-			if(subsampingUniformHeight)
-				this.rolloutSet = UtilAmpi.getSubSampleWithUniformHeightNewTetris(rolloutSet, this.rolloutSetSize);
 
 			System.out.println(String.format("sampling rollout set took: %s seconds", (System.currentTimeMillis() - t0) / (1000.0)));
 
@@ -150,7 +150,7 @@ public class Cbmpi {
 			ObjectiveFunction of = new ObjectiveFunction();
 			for (int i = 0; i < this.rolloutSet.size(); i++) {
 				Object state = this.rolloutSet.get(i);
-				Pair<List<List<Double>>, List<Double>> trainingSet = getFeatureEstimatedQ(state, nRollout, betaReg, betaCl, actionType);
+				Pair<List<List<Double>>, List<Double>> trainingSet = getFeatureEstimatedQPenalty(state, nRollout, betaReg, betaCl, actionType);
 
 				if(trainingSet.getSecond().size() > 0)
 					of.addChoice(trainingSet);
@@ -171,6 +171,8 @@ public class Cbmpi {
 					xsReg.add(actionFeatures.getSecond());
 					ysReg.add(RolloutUtil.doRolloutTetrisIterative(sa, this.nRollout, betaReg, betaCl, gamma,
 							featureSetValue, featureSetClassification, random, task, actionType, paretoFeatureSet, paretoWeights));
+//					ysReg.add(RolloutUtil.doRolloutTetrisIterative(sa, this.nRollout, betaReg, betaReg, gamma,
+//							featureSetValue, featureSetValue, random, task, actionType, paretoFeatureSet, paretoWeights));
 				}
 			}
 
@@ -207,12 +209,11 @@ public class Cbmpi {
 
 	private Pair<List<List<Double>>, List<Double>> getFeatureEstimatedQ (Object state, int nrollout, List<Double> betaReg,
 																		 List<Double> betaCl, UtilAmpi.ActionType actionType) {
-//		List<Pair<String,List<Double>>> actions = this.game.getStateActionFeatureValues(featureSetClassification, state, actionType, paretoFeatureSet, paretoWeights);
 		List<Pair<Action,List<Double>>> actions = this.game.getStateActionFeatureValues(featureSetClassification, state, actionType, paretoFeatureSet, paretoWeights);
 
 		List<List<Double>> features = new ArrayList<>();
 		List<Double> utils = new ArrayList<>();
-
+		double maxQEstimate = Double.NEGATIVE_INFINITY;
 //		((TetrisState)state).print();
 		for (Pair<Action,List<Double>> action : actions) {
 				Pair<Object, Action> stateAction = new Pair<>(state, action.getFirst());
@@ -224,11 +225,39 @@ public class Cbmpi {
 					qEstimate = qEstimate + RolloutUtil.doRolloutTetrisIterative(stateAction, nrollout, betaReg, betaCl,
 							gamma, featureSetValue, featureSetClassification, random, task, actionType, paretoFeatureSet, paretoWeights);
 				}
-				utils.add(qEstimate / averageOver);
+			if(qEstimate > maxQEstimate)
+				maxQEstimate = qEstimate;
+
+			utils.add(qEstimate / averageOver);
 		}
 		return new Pair<>(features, utils);
 	}
 
+	private Pair<List<List<Double>>, List<Double>> getFeatureEstimatedQPenalty(Object state, int nrollout, List<Double> betaReg,
+																		 List<Double> betaCl, UtilAmpi.ActionType actionType) {
+		List<Pair<Action,List<Double>>> actions = this.game.getStateActionFeatureValues(featureSetClassification, state, UtilAmpi.ActionType.ANY, paretoFeatureSet, paretoWeights);
+
+		List<List<Double>> features = new ArrayList<>();
+		List<Double> utils = new ArrayList<>();
+		double maxQEstimate = Double.NEGATIVE_INFINITY;
+//		((TetrisState)state).print();
+		for (Pair<Action,List<Double>> action : actions) {
+			Pair<Object, Action> stateAction = new Pair<>(state, action.getFirst());
+			features.add(action.getSecond());
+//			Pair<Object, Double> stateReward = this.game.getNewStateAndReward(state, action.getFirst());
+			double qEstimate = 0;
+			int averageOver = 1;
+			for (int i = 0; i < averageOver; i++) {
+				qEstimate = qEstimate + RolloutUtil.doRolloutTetrisIterative(stateAction, nrollout, betaReg, betaCl,
+						gamma, featureSetValue, featureSetClassification, random, task, actionType, paretoFeatureSet, paretoWeights);
+			}
+			if(qEstimate > maxQEstimate)
+				maxQEstimate = qEstimate;
+
+			utils.add(qEstimate / averageOver);
+		}
+		return new Pair<>(features, utils);
+	}
 
 
 	private List<Double> minimizeUsingCMAES(ObjectiveFunction fitfun){

@@ -6,6 +6,7 @@ import domains.*;
 import domains.tetris.TetrisAction;
 import domains.tetris.TetrisFeatures;
 import domains.tetris.TetrisState;
+import models.Policy;
 import org.apache.commons.math3.util.Pair;
 
 import java.io.File;
@@ -100,6 +101,20 @@ public class RolloutUtil {
         }
         double lastStateValue = state.features.gameOver? 0 : getValue(state.features, betaReg, featureSetReg);
         return reward + Math.pow(gamma, n) * lastStateValue;
+    }
+
+    public static double doRolloutTetrisIterative(Pair<Object, Action> stateAction, int n, Policy policy, double gamma, Random random, Task task) {
+        TetrisState state = ((TetrisState)stateAction.getFirst()).copy();
+        int rolloutIndex = 0;
+        double reward = 0;
+        state.nextState(stateAction.getSecond(), random);
+        while(rolloutIndex < n && !state.features.gameOver){
+            reward = reward + Math.pow(gamma, rolloutIndex)*task.getReward(null, null, state);
+            Action action = policy.pickAction(state);
+            state.nextState(action, random);
+            rolloutIndex++;
+        }
+        return reward + Math.pow(gamma, n);
     }
 
     public static Action getBestActionTetris(Object state, List<Double> beta, FeatureSet featureSet, Random random, UtilAmpi.ActionType actionType, FeatureSet paretoFeatureSet, double[] paretoWeights) {

@@ -47,7 +47,7 @@ public class generateStyle {
         System.out.println("seed:" + seed);
 
         UtilAmpi.ActionType  actionType = UtilAmpi.ActionType.ANY;
-        Dpi dpi = new Dpi(game, featureSet, numIt, sampleSize, nrollout, gamma, 1, initialWeights, actionType, random);
+        Dpi dpi = new Dpi(game, featureSet, numIt, sampleSize, nrollout, gamma, 1, initialWeights, actionType, random, false);
 
         List<Double> rewardFunction = new ArrayList<>();
         //Maximize Cum Wells (bcts):

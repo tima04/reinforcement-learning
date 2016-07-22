@@ -62,6 +62,7 @@ public class playTetris {
 //                "apprdom0.99.txt");
 
 
+//        playGames(1, new RandomPick(random), random, "");
         playGames(100, new SingleCueTallyRest(new int[]{-1,-1,1}, 0, new TetrisFeatureSet("people"), random), random, "");
 //        playGames(100, new LinearPick(weights, new TetrisFeatureSet("bcts"), random), random, "");
 //        playSteps(10000, new LinearPick(weights, new TetrisFeatureSet("bcts"), random), random);
@@ -100,8 +101,8 @@ public class playTetris {
 //                detailedReport.addLine(state.getString()+","+action.col+"_"+action.rot);
 //                detailedReport.generate();
                 state.nextState(action.col, action.rot, random);
-                state.print();
-                state.printFeatures(state.features);
+//                state.print();
+//                state.printFeatures(state.features);
 //                System.out.println(state.getString());
                 score += state.features.nClearedLines;
             }

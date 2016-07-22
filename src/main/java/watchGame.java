@@ -32,7 +32,7 @@ public class watchGame extends PApplet {
         size(800, 800);
     }
 
-    String dirPath = "src/main/resources/tetris/rawGames/people_new/Lui";
+    String dirPath = "src/main/resources/tetris/rawGames/people_new/Malte";
 
     public void setup(){
 
@@ -45,7 +45,6 @@ public class watchGame extends PApplet {
 
         int[] weights = new int[]{-1,-1,1};
         pick = new SingleCueTallyRest(weights, 0, new TetrisFeatureSet("people"), random);
-        gameIdx = 70;
     }
 
 

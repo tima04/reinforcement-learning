@@ -20,11 +20,11 @@ public class analyzeTetris {
 
     static FeatureSet featureSet = new TetrisFeatureSet("bcts");
 
-//    static String path = "src/main/resources/tetris/rawGames/bcts/";
-//    static String suffix = "Bcts";
-//    static int numSamples = 10000;
-//    static int height = 16;
-//    static int width = 10;
+    static String path = "src/main/resources/tetris/rawGames/bcts/";
+    static String suffix = "Bcts";
+    static int numSamples = 10000;
+    static int height = 16;
+    static int width = 10;
 //  Make sure board is 16 by 10
 
 //    static String path = "src/main/resources/tetris/rawGames/random/";
@@ -55,11 +55,11 @@ public class analyzeTetris {
 //    static int width = 10;
 ////  Make sure board is 16 by 10
 
-    static String path = "src/main/resources/tetris/rawGames/people/";
-    static String suffix = "AllPeople";
-    static int numSamples = 200000;
-    static int height = 20;
-    static int width = 10;
+//    static String path = "src/main/resources/tetris/rawGames/people/";
+//    static String suffix = "AllPeople";
+//    static int numSamples = 200000;
+//    static int height = 20;
+//    static int width = 10;
 ////Make sure board is 20 by 10
 
     static String outpath = "src/main/resources/tetris/data/";

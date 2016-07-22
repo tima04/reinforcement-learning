@@ -494,5 +494,6 @@ public class TetrisState implements State {
 
     public void printFeatures(TetrisFeatures features) {
         System.out.println("distance from center: "+features.distanceFromCenter);
+        System.out.println("landing height: "+features.landingHeight);
     }
 }

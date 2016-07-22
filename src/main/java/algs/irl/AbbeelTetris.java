@@ -359,7 +359,8 @@ public class AbbeelTetris {
                 1,
                 initWeightsDpi,
                 UtilAmpi.ActionType.ANY,
-                random);
+                random,
+                false);
         dpi.setRounds(10);
         dpi.setTask(task);
         List<Double> weights = dpi.iterate();

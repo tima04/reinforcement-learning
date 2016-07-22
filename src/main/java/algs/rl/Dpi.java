@@ -55,7 +55,9 @@ public class Dpi {
 		else if (arg[0].equals("cum"))
 			actionType = UtilAmpi.ActionType.CUMDOM;
 
-		Dpi dpi = new Dpi(game, featureSet, numIt, sampleSize, nrollout, gamma, 10, initialWeights, actionType, random);
+		boolean gabillonSample = true;
+
+		Dpi dpi = new Dpi(game, featureSet, numIt, sampleSize, nrollout, gamma, 10, initialWeights, actionType, random, gabillonSample);
 		dpi.iterate();
 	}
 
@@ -93,11 +95,11 @@ public class Dpi {
 	final FeatureSet paretoFeatureSet = new TetrisFeatureSet("bcts");
 	//	final double[] paretoWeights = new double[]{-13.08, -19.77, -9.22, -10.49, 6.60, -12.63, -24.04, -1.61};
 	final static double[] paretoWeights = new double[]{-5, -6, -2, -3, 1, -4, -7, -1}; //It should have the same effect since the direction and order are the same.
-
+	boolean sampleGabillon = false;
 
 	public Dpi(Game game, FeatureSet featureSetClassification, int maxSim,
 			   int rolloutSetSize, int nRollout, double gamma, int cmaesIterations, List<Double> betaCl,
-			   UtilAmpi.ActionType actionTypeCla, Random random) {
+			   UtilAmpi.ActionType actionTypeCla, Random random, boolean sampleGabillon) {
 		// beta is stateAction features, and theta is state features
 		System.out.println("TetrisBoard:" + TetrisState.height+"x"+TetrisState.width);
 		System.out.println("First Rollout BCTS: " + firstRolloutBcts);
@@ -121,6 +123,7 @@ public class Dpi {
 		this.rolloutSet = new ArrayList<Object>();
 		this.actionType = actionTypeCla;
 		this.random = random;
+		this.sampleGabillon = sampleGabillon;
 		System.out.println("****************************");
 		System.out.println("performance in 100 rounds: ");
 		double[] betaVector = new double[betaCl.size()];
@@ -140,13 +143,19 @@ public class Dpi {
 //			if(k==0 && firstRolloutBcts){//Take first rollout set from good policy.
 //				this.rolloutSet = RolloutUtil.getRolloutSetTetris(this.game, this.rolloutSetSize * samplingFactor, Arrays.asList(new Double[]{ -13.08,-19.77,-9.22,-10.49,6.60,-12.63,-24.04,-1.61,0.}), new TetrisFeatureSet("thierry"), actionType, paretoFeatureSet, paretoWeights, random);
 //				this.rolloutSet = RolloutUtil.getRolloutSetTetrisGabillon("src/main/resources/tetris/rawGames/sample_gabillon/record_du10++cat.txt", random);
-				this.rolloutSet = RolloutUtil.getRolloutSetTetrisGabillon("gabillon_sample/record_du10++cat.txt", random, this.rolloutSetSize);
+//				this.rolloutSet = RolloutUtil.getRolloutSetTetrisGabillon("gabillon_sample/record_du10++cat.txt", random, this.rolloutSetSize);
+
 //			}else {
 //				this.rolloutSet = RolloutUtil.getRolloutSetTetris(this.game, this.rolloutSetSize * samplingFactor, this.betaCl, this.featureSetClassification, actionType, paretoFeatureSet, paretoWeights, random);
 //			}
+			if(sampleGabillon) {
+				this.rolloutSet = RolloutUtil.getRolloutSetTetrisGabillon("gabillon_sample/record_du20++mixcat2", random, this.rolloutSetSize);
+			}else{
+				this.rolloutSet = RolloutUtil.getRolloutSetTetris(this.game, this.rolloutSetSize * samplingFactor, this.betaCl, this.featureSetClassification, actionType, paretoFeatureSet, paretoWeights, random);
+			}
 
-			if(subsampingUniformHeight)
-				this.rolloutSet = UtilAmpi.getSubSampleWithUniformHeightNewTetris(rolloutSet, this.rolloutSetSize);
+//			if(subsampingUniformHeight)
+//				this.rolloutSet = UtilAmpi.getSubSampleWithUniformHeightNewTetris(rolloutSet, this.rolloutSetSize);
 
 			System.out.println(String.format("sampling rollout set (%s samples) took: %s seconds", rolloutSet.size(), (System.currentTimeMillis() - t0) / (1000.0)));
 

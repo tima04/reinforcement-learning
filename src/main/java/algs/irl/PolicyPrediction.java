@@ -66,6 +66,10 @@ public class PolicyPrediction {
 //        setOutput("lui");
         List<List<String>> lines = LoadTrajectories.loadData(dirPath);
         List<List<Pair<TetrisState, TetrisAction>>> fullGames = LoadTrajectories.parse(lines);
+
+        if(model.equals("irl"))
+                convOffset = 1;
+
         PolicyPrediction p = new PolicyPrediction(fullGames, trajectorySize, convOffset, policyFeatures, rewardFeatures, piecesList, true);
         suffix+=",";
         for (String s : piecesList)

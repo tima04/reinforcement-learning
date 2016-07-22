@@ -1,25 +1,21 @@
 package algs.irl;
 
 import domains.Action;
+import domains.FeatureSet;
 import domains.Features;
 import domains.tetris.*;
-import fr.inria.optimization.cmaes.CMAEvolutionStrategy;
-import fr.inria.optimization.cmaes.CMASolution;
-import fr.inria.optimization.cmaes.fitness.IObjectiveFunction;
 import models.CustomPolicy;
 import models.Policy;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.util.Pair;
 import policy.*;
 import util.Compute;
-import util.Pick;
-import util.UtilAmpi;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static util.StackedPickUtil.generateOffspring;
+import static util.StackedPickUtil.generateRandomStackedPick;
+import static util.StackedPickUtil.mutateStackedPick;
 
 
 public class SimpleHeuristicSearch {
@@ -53,7 +49,7 @@ public class SimpleHeuristicSearch {
         for (int iter = 0; iter < 1; iter++) {
             List<StackedPick> heuristics = new ArrayList<>();
             for (int i = 0; i < n; i++)
-                heuristics.add(generateRandomStackedPick(random.nextInt(3)+1));
+                heuristics.add(generateRandomStackedPick((random.nextInt(3)+1), featureSet, random));
 
             for (int gen = 0; gen < generations; gen++) {
                 double[] values = new double[n];
@@ -83,7 +79,7 @@ public class SimpleHeuristicSearch {
                 for (int i = 0; i < p; i++)
                     bestHeuristics.add(heuristics.get(orderedIndices[i]));
 
-                heuristics = generateOffspring(bestHeuristics, n);
+                heuristics = generateOffspring(bestHeuristics, featureSet, n, random, 10);
                 bestHeuristic = bestHeuristics.get(0);
                 bestHeuristic.print(featureSet.featureNames());
             }
@@ -91,68 +87,6 @@ public class SimpleHeuristicSearch {
         return bestHeuristic;
     }
 
-    private List<StackedPick> generateOffspring(List<StackedPick> bestHeuristics, int n) {
-        List<StackedPick> offpsring = new ArrayList<>();
-        for (StackedPick bestHeuristic : bestHeuristics)
-            offpsring.add(bestHeuristic);
 
-        int motherIndex = 0;
-        for (int i = offpsring.size(); i < n; i++) {
-            offpsring.add(mutateStackedPick(bestHeuristics.get(motherIndex)));
-            motherIndex++;
-            if(motherIndex >= bestHeuristics.size())
-                motherIndex = 0;
-        }
 
-        return offpsring;
-    }
-
-    private StackedPick generateRandomStackedPick(int numLevels){
-        List<PickAction> picks = new ArrayList<>();
-        for (int i = 0; i < numLevels; i++)
-           picks.add(getRandomPick());
-
-        StackedPick stackedPick = new StackedPick(picks);
-        return stackedPick;
-    }
-
-    /**
-     * Returns a mutated decision rule.
-     * @param stackedPick
-     * @return
-     */
-    private StackedPick mutateStackedPick(StackedPick stackedPick){
-        List<PickAction> picks = new ArrayList<>();
-        List<PickAction> motherPicks = stackedPick.getPicks();
-        int mutatedPickIdx = random.nextInt(motherPicks.size());
-        for (int i = 0; i < motherPicks.size(); i++) {
-            PickAction motherPick = motherPicks.get(i);
-            if(i == mutatedPickIdx) {
-                picks.add(getRandomPick());
-            }else{
-                picks.add(motherPick);
-            }
-        }
-        StackedPick mutatedStackedPick = new StackedPick(picks);
-        return mutatedStackedPick;
-    }
-
-    private PickAction getRandomPick(){
-        if(random.nextGaussian() > 0){//add single cue
-            double signProducer = random.nextGaussian();
-            int sign = (int) (signProducer / Math.abs(signProducer));
-            int featureIdx = Pick.indexRandom(featureSet.featureNames().size(), random);
-            SingleCue singleCue = new SingleCue(sign, featureIdx, featureSet, 0, random, new TetrisTaskLines(1));
-            return singleCue;
-        }else{//add double cue tally
-            double signProducer = random.nextGaussian();
-            int sign1 = (int) (signProducer / Math.abs(signProducer));
-            int featureIdx1 = Pick.indexRandom(featureSet.featureNames().size(), random);
-            signProducer = random.nextGaussian();
-            int sign2 = (int) (signProducer / Math.abs(signProducer));
-            int featureIdx2 = Pick.indexRandom(featureSet.featureNames().size(), random);
-            Tally tally = new Tally(new int[]{sign1, sign2}, new int[]{featureIdx1, featureIdx2}, featureSet, random);
-            return tally;
-        }
-    }
 }

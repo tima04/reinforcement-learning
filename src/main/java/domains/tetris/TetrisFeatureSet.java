@@ -51,6 +51,7 @@ public class TetrisFeatureSet implements FeatureSet{
             values.add((double)tetrisFeatures.rbf[2]);
             values.add((double)tetrisFeatures.rbf[3]);
             values.add((double)tetrisFeatures.rbf[4]);
+            values.add(1.);
         }else if(featureSet.equals("bcts")){
             values.add((double)tetrisFeatures.nHoles);
             values.add((double)tetrisFeatures.colTransition);
@@ -195,6 +196,7 @@ public class TetrisFeatureSet implements FeatureSet{
             names.add("rbf_2");
             names.add("rbf_3");
             names.add("rbf_4");
+            names.add("constant");
         }else if(featureSet.equals("bcts")){
             names.add("nHoles");
             names.add("colTransition");

@@ -23,18 +23,18 @@ public class AmpiQ {
 	public static void main(String[] arg){
 
 		Random random = new Random();
-		FeatureSet featureSet = new TetrisFeatureSet("lagoudakisthierry");
+		FeatureSet featureSet = new TetrisFeatureSet("thierryrbf");
 		Game game = new Game(random, new TetrisTaskLines(0.9));
 		List<Double> initialWeights = new ArrayList<>();
-		TetrisParameters.getInstance().setSize(16,10);
+		TetrisParameters.getInstance().setSize(10,10);
 		for (String name: game.getFeatureNames(featureSet)){
 			initialWeights.add(-0.);
 		};
 
 
-		int numIt = 30;
-		double gamma = 0.9;
-		int sampleSize = 20000;
+		int numIt = 10;
+		double gamma = 1;
+		int sampleSize = 10000;
 		int nrollout = 15;
 		setOutput("ampiq_"+featureSet.name()+"_"+sampleSize+"_"+arg[0]);
 		UtilAmpi.ActionType  actionType = UtilAmpi.ActionType.ANY;
